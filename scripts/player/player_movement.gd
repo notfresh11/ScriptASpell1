@@ -12,38 +12,55 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var player_id: int = 1 :
 	set(value):
 		player_id = value
-		# Activăm input-ul și camera doar pentru jucătorul local
 		set_multiplayer_authority(player_id)
+		if is_multiplayer_authority() and is_node_ready():
+			_setup_local_player()
 
 @onready var camera: Camera3D = $Camera3D
-@onready var synchronizer: MultiplayerSynchronizer = $MultiplayerSynchronizer
+@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 
 func _ready() -> void:
-	# Dacă nu avem autoritate multiplayer, dezactivăm camera locală și procesarea de mișcare locală
-	if not is_multiplayer_authority():
-		camera.current = false
-		set_process_unhandled_input(false)
-		set_physics_process(false)
+	_setup_input_actions()
+
+	if is_multiplayer_authority():
+		_setup_local_player()
 	else:
-		camera.current = true
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		camera.current = false
+
+# Inițializăm dinamic acțiunile pentru WASD și Săgeți + Space
+func _setup_input_actions() -> void:
+	var actions = {
+		"move_left": [KEY_A, KEY_LEFT],
+		"move_right": [KEY_D, KEY_RIGHT],
+		"move_forward": [KEY_W, KEY_UP],
+		"move_backward": [KEY_S, KEY_DOWN],
+		"jump": [KEY_SPACE]
+	}
+
+	for action in actions:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+			for key in actions[action]:
+				var event = InputEventKey.new()
+				event.physical_keycode = key
+				InputMap.action_add_event(action, event)
+
+func _setup_local_player() -> void:
+	camera.current = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# Ascundem propriul model 3D pentru a nu bloca vederea camerei din interior
+	if mesh_instance:
+		mesh_instance.visible = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
 
-	# Mișcare cameră cu mouse-ul
-	if event is InputEventMouseMotion:
+	# Rotim camera doar dacă mouse-ul este capturat (meniul este închis)
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		camera.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
 		camera.rotation.x = clamp(camera.rotation.x, -deg_to_rad(80), deg_to_rad(80))
-
-	# Apăsare tasta ESC pentru eliberarea mouse-ului (util pentru testare)
-	if event.is_action_pressed("ui_cancel"):
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		else:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
@@ -54,11 +71,11 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 
 	# Săritură
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
 	# Preluăm direcția de mișcare de la taste (WASD / Săgeți)
-	var input_dir: Vector2 = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var input_dir: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var direction: Vector3 = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 
 	if direction:
