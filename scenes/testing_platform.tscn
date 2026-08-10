@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://b1m6e2s7y62o4"]
+[gd_scene load_steps=7 format=3]
 
 [ext_scene type="Script" path="res://scripts/ui/testing_platform.gd" id="1_testing_platform"]
 
