@@ -180,15 +180,4 @@ func _on_network_player_list_changed() -> void:
 
 	# Gestionăm activarea butonului de Start Game (doar pentru host)
 	if multiplayer.is_server():
-		# Host-ul poate da start dacă toți clienții conectați sunt Ready
-		var all_ready: bool = true
-		for pid in NetworkManager.players:
-			if pid != 1 and not NetworkManager.players[pid]["ready"]:
-				all_ready = false
-				break
-
-		# Host-ul poate decide să pornească oricum (force ready), deci lăsăm butonul mereu activ,
-		# dar îi dăm un feedback vizual (de exemplu, o culoare diferită sau dezactivat parțial,
-		# dar în cazul nostru, utilizatorul a cerut "sau când da host ul force ready",
-		# deci lăsăm Start Game mereu activ și accesibil pentru host!)
 		start_game_button.disabled = false
