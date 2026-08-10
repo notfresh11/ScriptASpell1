@@ -1,0 +1,31 @@
+[gd_scene load_steps=6 format=3 uid="uid://b822d645e5f5m"]
+
+[ext_scene type="Script" path="res://scripts/ui/main_menu.gd" id="1_main_menu_gd"]
+[ext_scene type="PackedScene" uid="uid://cx6g0gswbpx4y" path="res://scenes/ui/start_panel.tscn" id="2_start_panel"]
+[ext_scene type="PackedScene" uid="uid://b1m6e2s7y62o3" path="res://scenes/ui/join_panel.tscn" id="3_join_panel"]
+[ext_scene type="PackedScene" uid="uid://cx6g0gswbpx4q" path="res://scenes/ui/lobby_panel.tscn" id="4_lobby_panel"]
+[ext_scene type="PackedScene" uid="uid://cx6g0gswbpx4z" path="res://scenes/ui/settings_panel.tscn" id="5_settings_panel"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main_menu_gd")
+
+[node name="StartPanel" parent="." instance=ExtResource("2_start_panel")]
+layout_mode = 1
+
+[node name="JoinPanel" parent="." instance=ExtResource("3_join_panel")]
+visible = false
+layout_mode = 1
+
+[node name="LobbyPanel" parent="." instance=ExtResource("4_lobby_panel")]
+visible = false
+layout_mode = 1
+
+[node name="SettingsPanel" parent="." instance=ExtResource("5_settings_panel")]
+visible = false
+layout_mode = 1
