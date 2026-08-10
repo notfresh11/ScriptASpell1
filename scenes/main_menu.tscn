@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://b822d645e5f5m"]
+[gd_scene load_steps=6 format=3]
 
 [ext_scene type="Script" path="res://scripts/ui/main_menu.gd" id="1_main_menu_gd"]
-[ext_scene type="PackedScene" uid="uid://cx6g0gswbpx4y" path="res://scenes/ui/start_panel.tscn" id="2_start_panel"]
-[ext_scene type="PackedScene" uid="uid://b1m6e2s7y62o3" path="res://scenes/ui/join_panel.tscn" id="3_join_panel"]
-[ext_scene type="PackedScene" uid="uid://cx6g0gswbpx4q" path="res://scenes/ui/lobby_panel.tscn" id="4_lobby_panel"]
-[ext_scene type="PackedScene" uid="uid://cx6g0gswbpx4z" path="res://scenes/ui/settings_panel.tscn" id="5_settings_panel"]
+[ext_scene type="PackedScene" path="res://scenes/ui/start_panel.tscn" id="2_start_panel"]
+[ext_scene type="PackedScene" path="res://scenes/ui/join_panel.tscn" id="3_join_panel"]
+[ext_scene type="PackedScene" path="res://scenes/ui/lobby_panel.tscn" id="4_lobby_panel"]
+[ext_scene type="PackedScene" path="res://scenes/ui/settings_panel.tscn" id="5_settings_panel"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3

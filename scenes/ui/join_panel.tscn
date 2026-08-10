@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://b1m6e2s7y62o3"]
+[gd_scene load_steps=2 format=3]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.08, 0.08, 0.1, 0.95)
