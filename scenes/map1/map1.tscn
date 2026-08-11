@@ -1,0 +1,139 @@
+[gd_scene load_steps=12 format=3 uid="uid://b8tqpkv64s8j1"]
+
+[ext_resource type="Script" path="res://scripts/map1/map1.gd" id="1_map_script"]
+[ext_resource type="PackedScene" uid="uid://cx6y8u4s35m8j" path="res://scenes/interactables/dungeon_door.tscn" id="2_dungeon_door"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/dungeon_generator.tscn" id="3_dungeon_gen"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_exterior"]
+albedo_color = Color(0.2, 0.18, 0.15, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_structure"]
+size = Vector3(10, 8, 10)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_struct_mat"]
+albedo_color = Color(0.3, 0.3, 0.32, 1)
+roughness = 0.8
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.08, 0.08, 0.12, 1)
+sky_horizon_color = Color(0.15, 0.15, 0.2, 1)
+ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
+
+[sub_resource type="Sky" id="Sky_env"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_world"]
+background_mode = 2
+sky = SubResource("Sky_env")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+
+[node name="Map1" type="Node3D"]
+script = ExtResource("1_map_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_world")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 15, 0)
+light_color = Color(0.7, 0.8, 0.9, 1)
+light_energy = 0.5
+shadow_enabled = true
+
+[node name="ExteriorFloor" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ExteriorFloor"]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ExteriorFloor"]
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("StandardMaterial3D_exterior")
+
+[node name="DungeonEntranceStructure" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -15)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DungeonEntranceStructure"]
+mesh = SubResource("BoxMesh_structure")
+surface_material_override/0 = SubResource("StandardMaterial3D_struct_mat")
+
+[node name="ExteriorDoor" parent="." instance=ExtResource("2_dungeon_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10.1)
+
+[node name="InteriorDoor" parent="." instance=ExtResource("2_dungeon_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -99.9, -2.5)
+is_exit = true
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="Point1" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, 10)
+
+[node name="Point2" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 10)
+
+[node name="Point3" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, 15)
+
+[node name="Point4" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 15)
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="DungeonGenerator" parent="." instance=ExtResource("3_dungeon_gen")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100, 0)
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/player/explorer_player.tscn")
+spawn_path = NodePath("../Players")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Map 1 Menu"
+horizontal_alignment = 1
+
+[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Leave Game"

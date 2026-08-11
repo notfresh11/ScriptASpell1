@@ -214,15 +214,21 @@ func _process_raycast() -> void:
 
 	if raycast.is_colliding():
 		var collider = raycast.get_collider()
-		if collider and collider.is_in_group("loot"):
-			var rarity_str = collider.rarity.to_upper()
-			var price_val = collider.price
-			var rarity_col = collider.item_color
+		if collider:
+			if collider.is_in_group("loot"):
+				var rarity_str = collider.rarity.to_upper()
+				var price_val = collider.price
+				var rarity_col = collider.item_color
 
-			pickup_prompt.text = "[E] Pick Up %s Item ($%d)" % [rarity_str, price_val]
-			pickup_prompt.self_modulate = rarity_col
-			pickup_prompt.visible = true
-			return
+				pickup_prompt.text = "[E] Pick Up %s Item ($%d)" % [rarity_str, price_val]
+				pickup_prompt.self_modulate = rarity_col
+				pickup_prompt.visible = true
+				return
+			elif collider.is_in_group("door"):
+				pickup_prompt.text = collider.get_prompt()
+				pickup_prompt.self_modulate = Color(0, 0.9, 0.8, 1) # Cyan neon accent
+				pickup_prompt.visible = true
+				return
 
 	pickup_prompt.visible = false
 
@@ -231,15 +237,19 @@ func _try_pickup() -> void:
 		return
 
 	var collider = raycast.get_collider()
-	if collider and collider.is_in_group("loot"):
-		# Verificăm dacă avem loc liber în inventar înainte de a cere serverului pickup-ul
-		var free_slot = inventory.find(null)
-		if free_slot == -1:
-			print("Inventarul este plin! Nu poți colecta mai mult.")
-			return
+	if collider:
+		if collider.is_in_group("loot"):
+			# Verificăm dacă avem loc liber în inventar înainte de a cere serverului pickup-ul
+			var free_slot = inventory.find(null)
+			if free_slot == -1:
+				print("Inventarul este plin! Nu poți colecta mai mult.")
+				return
 
-		# Trimitem cerere către server pentru procesare sigură (evitând pickup-uri multiple)
-		rpc_id(1, "request_pickup", collider.get_path())
+			# Trimitem cerere către server pentru procesare sigură (evitând pickup-uri multiple)
+			rpc_id(1, "request_pickup", collider.get_path())
+		elif collider.is_in_group("door"):
+			# Trimitem cerere către server pentru teleportare sigură între uși
+			rpc_id(1, "request_door_interact", collider.get_path())
 
 func _try_drop() -> void:
 	var item_to_drop = inventory[active_slot_index]
@@ -277,6 +287,33 @@ func request_pickup(item_path: NodePath) -> void:
 
 		# Notificăm clientul trimițător să îl adauge în inventar
 		rpc_id(sender_id, "add_to_inventory", item_rarity, item_price, item_color)
+
+@rpc("any_peer", "call_local")
+func request_door_interact(door_path: NodePath) -> void:
+	if not multiplayer.is_server():
+		return
+
+	var sender_id = multiplayer.get_remote_sender_id()
+	var door_node = get_node_or_null(door_path)
+
+	if door_node and door_node.is_in_group("door"):
+		var target_pos = door_node.target_position
+		if target_pos != Vector3.ZERO:
+			# Teleportăm instanța corespunzătoare a jucătorului pe server
+			# care se va sincroniza pe clienți prin intermediul MultiplayerSynchronizer
+			var player_node_name = str(sender_id)
+			var map_node = door_node.get_parent() # or search in tree
+			var players_container = null
+
+			# Căutăm nodul jucătorilor (atât în map1 cât și în testing_platform)
+			if map_node.has_node("Players"):
+				players_container = map_node.get_node("Players")
+			elif map_node.get_parent() and map_node.get_parent().has_node("Players"):
+				players_container = map_node.get_parent().get_node("Players")
+
+			if players_container and players_container.has_node(player_node_name):
+				var p_node = players_container.get_node(player_node_name)
+				p_node.global_position = target_pos
 
 @rpc("any_peer", "call_local")
 func add_to_inventory(p_rarity: String, p_price: int, p_color: Color) -> void:

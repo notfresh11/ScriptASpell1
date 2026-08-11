@@ -365,6 +365,28 @@ Proiectul are acum un sistem de interacțiune, economie și inventar extrem de s
 *   **Problema:** Schimbarea rezoluției din editor la 1920x1080 fără definirea explicită a viewport-ului de bază în setări cauza o pixelare și scalare urâtă a textului și a HUD-ului.
 *   **Rezolvarea:** Am configurat explicit rezoluția de bază a viewport-ului la 1920x1080 în `project.godot` sub secțiunea `[display]`, asigurând un rendering crisp și de înaltă definiție pentru interfață.
 
+### SESIUNEA 3: Implementare Flux Exterior (Map1), Uși de Dungeon și Game Loop Fundamental
+
+#### A. Unde suntem acum (Project State)
+Proiectul are acum un Game Loop complet funcțional în stil *Lethal Company*, oferind o structură clară de început-mijloc-sfârșit:
+1. **Lobby (Testing Platform):** Jucătorii pornesc pe platformă, stau pe zona roșie de expediție, iar la îndeplinirea condiției de pregătire, serverul încarcă harta exterioară.
+2. **Harta Exterioară (Map1):** O nouă scenă exterioară dedicată (`scenes/map1/map1.tscn` și `scripts/map1/map1.gd`) ce simulează exteriorul dungeon-ului. Conține spawn-uri pentru exploratori, o structură de intrare masivă și generatorul de dungeon procedural situat sub pământ la un offset de siguranță (Y = -100).
+3. **Mecanica de Uși de Dungeon (Dungeon Doors):**
+   - S-a creat o nouă scenă de interacțiune statică reutilizabilă: `DungeonDoor` (`scenes/interactables/dungeon_door.tscn` și `scripts/interactables/dungeon_door.gd`).
+   - Două uși sunt plasate static în scenă la încărcare: una în exterior (`ExteriorDoor`) și una în interiorul punctului de intrare al dungeon-ului (`InteriorDoor`).
+   - Ușile folosesc grupul dedicat `door` și sunt complet integrate cu RayCast-ul local al jucătorilor, afișând prompt-uri dinamice iluminate cyan neon: `[E] Enter Dungeon` și `[E] Exit Dungeon`.
+4. **Sistem de Teleportare Server-Authoritative:**
+   - La apăsarea tastei `E`, clientul trimite un RPC sigur către server (`request_door_interact`).
+   - Serverul validează acțiunea și teleporteză instantaneu jucătorul la poziția ușii pereche.
+   - Poziția este sincronizată în timp real la toți clienții conectați prin `MultiplayerSynchronizer`.
+   - Toate obiectele adunate în inventar (loot-ul) sunt perfect păstrate și transportate între exterior și interior.
+
+#### B. Bugs Întâmpinate & Rezolvări Tehnice
+
+##### 1. Sincronizarea Ușilor Dinamice în Rețea
+* **Problema:** Inițial, ușa din interiorul dungeon-ului era generată dinamic de server la pornire și adăugată ca și copil în generator. Fără un `MultiplayerSpawner` configurat special să asculte de noi uși, clienții nu instanțiau ușa local, neputând să o vadă sau să interacționeze cu ea.
+* **Rezolvarea:** Am simplificat și optimizat designul, plasând ambele uși (`ExteriorDoor` și `InteriorDoor`) static în scena `map1.tscn` la încărcare. Acest lucru garantează că toți clienții încarcă și instanțiază ușile instantaneu și sincron, serverul ocupându-se doar de corelarea și sincronizarea destinațiilor de teleportare (`target_position`) prin RPC la început.
+
 ---
 
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
