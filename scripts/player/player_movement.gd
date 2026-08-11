@@ -40,6 +40,10 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 	$HUD/Hotbar/Slot4
 ]
 
+# Cache styleboxes as suggested for optimization
+var style_normal: StyleBoxFlat = StyleBoxFlat.new()
+var style_active: StyleBoxFlat = StyleBoxFlat.new()
+
 # State de inventar local pentru authority-ul jucătorului
 var inventory: Array = [null, null, null, null]
 var active_slot_index: int = 0
@@ -49,6 +53,7 @@ var puppet_hand_item: MeshInstance3D = null
 var local_hand_item: MeshInstance3D = null
 
 func _ready() -> void:
+	_init_styles()
 	_setup_input_actions()
 	_setup_hand_visuals()
 
@@ -63,6 +68,30 @@ func _ready() -> void:
 	# Inițializăm hand visuals-ul corespunzător culorii
 	_update_hand_visual_for_all()
 	_update_hud()
+
+# Înființăm stilurile de bază pentru UI
+func _init_styles() -> void:
+	style_normal.bg_color = Color(0.12, 0.12, 0.14, 0.6)
+	style_normal.border_width_left = 2
+	style_normal.border_width_top = 2
+	style_normal.border_width_right = 2
+	style_normal.border_width_bottom = 2
+	style_normal.border_color = Color(0.25, 0.25, 0.28, 0.8)
+	style_normal.corner_radius_top_left = 5
+	style_normal.corner_radius_top_right = 5
+	style_normal.corner_radius_bottom_right = 5
+	style_normal.corner_radius_bottom_left = 5
+
+	style_active.bg_color = Color(0.16, 0.16, 0.2, 0.8)
+	style_active.border_width_left = 3
+	style_active.border_width_top = 3
+	style_active.border_width_right = 3
+	style_active.border_width_bottom = 3
+	style_active.border_color = Color(0, 0.9, 0.8, 1) # Cyan neon highlight
+	style_active.corner_radius_top_left = 5
+	style_active.corner_radius_top_right = 5
+	style_active.corner_radius_bottom_right = 5
+	style_active.corner_radius_bottom_left = 5
 
 # Înființăm dinamic mesh-urile pentru mână (local vs puppet)
 func _setup_hand_visuals() -> void:
@@ -118,15 +147,19 @@ func _setup_local_player() -> void:
 	if hud:
 		hud.visible = true
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
 
-	# Rotire cameră prin mișcarea mouse-ului
+	# Rotire cameră prin mișcarea mouse-ului - în _input ca să nu fie blocat de elemente UI/HUD
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		camera.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
 		camera.rotation.x = clamp(camera.rotation.x, -deg_to_rad(80), deg_to_rad(80))
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_multiplayer_authority():
+		return
 
 	# Schimbare Slot-uri active (Hotkeys 1-4)
 	if event.is_action_pressed("hotkey_1"): _select_slot(0)
@@ -298,32 +331,7 @@ func _update_hud() -> void:
 	if not is_multiplayer_authority() or not hud:
 		return
 
-	# Cream stilurile pentru highlight-ul slot-ului activ
-	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = Color(0.12, 0.12, 0.14, 0.6)
-	style_normal.border_width_left = 2
-	style_normal.border_width_top = 2
-	style_normal.border_width_right = 2
-	style_normal.border_width_bottom = 2
-	style_normal.border_color = Color(0.25, 0.25, 0.28, 0.8)
-	style_normal.corner_radius_top_left = 5
-	style_normal.corner_radius_top_right = 5
-	style_normal.corner_radius_bottom_right = 5
-	style_normal.corner_radius_bottom_left = 5
-
-	var style_active = StyleBoxFlat.new()
-	style_active.bg_color = Color(0.16, 0.16, 0.2, 0.8)
-	style_active.border_width_left = 3
-	style_active.border_width_top = 3
-	style_active.border_width_right = 3
-	style_active.border_width_bottom = 3
-	style_active.border_color = Color(0, 0.9, 0.8, 1) # Cyan neon highlight
-	style_active.corner_radius_top_left = 5
-	style_active.corner_radius_top_right = 5
-	style_active.corner_radius_bottom_right = 5
-	style_active.corner_radius_bottom_left = 5
-
-	# Actualizăm grafic cele 4 slot-uri
+	# Actualizăm grafic cele 4 slot-uri folosind stilurile cache-uite
 	for i in range(4):
 		var slot_panel = hotbar_slots[i]
 		var label = slot_panel.get_node("Label")
