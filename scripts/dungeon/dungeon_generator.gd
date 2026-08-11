@@ -4,7 +4,7 @@ extends Node3D
 @export var max_main_pieces: int = 30
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
 
-# Preîncărcăm cele 7 piese modulare
+# Preîncărcăm cele 7 piese modulare + Loot
 const ENTRANCE_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/entrance_piece.tscn")
 const HALLWAY_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/hallway_piece.tscn")
 const CORNER_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/corner_piece.tscn")
@@ -12,9 +12,11 @@ const T_JUNCTION_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/t_jun
 const FOUR_WAY_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/four_way_piece.tscn")
 const ROOM_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/room_piece.tscn")
 const DEAD_END_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/dead_end_piece.tscn")
+const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.tscn")
 
 @onready var pieces_node: Node3D = $Pieces
 @onready var players_node: Node3D = $Players
+@onready var loot_node: Node3D = $Loot
 @onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 
 # Grid stocare piese: { Vector2i(x, y): { "path": String, "rotation_steps": int, "ports": Array, "type": String, "instance": Node3D } }
@@ -441,6 +443,65 @@ func generate_dungeon() -> void:
 		}
 
 	print("Dungeon generat cu succes! Total piese: ", grid.size())
+
+	if multiplayer.is_server():
+		spawn_dungeon_loot()
+
+# --- SPAWNING LOOT PROCEDURAL ---
+func spawn_dungeon_loot() -> void:
+	print("Se spawnează loot în camere...")
+	for cell in grid:
+		var info = grid[cell]
+		if info["type"] == "entrance" or info["type"] == "dead_end":
+			continue
+
+		var center_pos = Vector3(cell.x * 10.0, 0.5, cell.y * 10.0)
+
+		if info["type"] == "room":
+			# Spawnează între 1 și 3 iteme în camere mari
+			var count = randi_range(1, 3)
+			for j in range(count):
+				spawn_loot_at(center_pos)
+		else:
+			# 20% șansă de spawn în coridoare/intersecții
+			if randf() < 0.2:
+				spawn_loot_at(center_pos)
+
+func spawn_loot_at(pos: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+
+	var loot_instance = LOOT_SCENE.instantiate()
+	var rarity_roll = randf()
+	var rarity = "common"
+	var price = 15
+	var color = Color(0.5, 0.5, 0.5, 1) # Grey
+
+	if rarity_roll < 0.05:
+		rarity = "epic"
+		price = randi_range(75, 100)
+		color = Color(0.6, 0.1, 0.8, 1) # Purple
+	elif rarity_roll < 0.20:
+		rarity = "rare"
+		price = randi_range(50, 75)
+		color = Color(0.9, 0.8, 0.1, 1) # Yellow
+	elif rarity_roll < 0.50:
+		rarity = "uncommon"
+		price = randi_range(30, 50)
+		color = Color(0.1, 0.7, 0.2, 1) # Green
+	else:
+		rarity = "common"
+		price = randi_range(10, 30)
+		color = Color(0.5, 0.5, 0.5, 1) # Grey
+
+	var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
+
+	# Setăm poziția înainte de add_child
+	loot_instance.position = pos + Vector3(randf_range(-1.5, 1.5), 0.5, randf_range(-1.5, 1.5))
+	loot_node.add_child(loot_instance)
+
+	# Inițializăm proprietățile sincronizate prin rețea
+	loot_instance.init_loot(unique_id, rarity, price, color)
 
 # --- GĂSIREA CANDIDAȚILOR COMPATIBILI (CONSTRÂNGERI ADIACENTE) ---
 func get_valid_pieces_for(cell: Vector2i) -> Array:
