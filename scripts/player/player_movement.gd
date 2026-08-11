@@ -292,6 +292,11 @@ func request_pickup(item_path: NodePath) -> void:
 		# Notificăm clientul trimițător să îl adauge în inventar
 		rpc_id(sender_id, "add_to_inventory", item_rarity, item_price, item_color)
 
+@rpc("any_peer", "call_local", "reliable")
+func teleport_to(target_pos: Vector3) -> void:
+	if is_multiplayer_authority():
+		global_position = target_pos
+
 @rpc("any_peer", "call_local")
 func request_door_interact(door_path: NodePath) -> void:
 	if not multiplayer.is_server():
@@ -317,7 +322,10 @@ func request_door_interact(door_path: NodePath) -> void:
 
 			if players_container and players_container.has_node(player_node_name):
 				var p_node = players_container.get_node(player_node_name)
-				p_node.global_position = target_pos
+				if sender_id == 1 or sender_id == 0 or sender_id == multiplayer.get_unique_id():
+					p_node.global_position = target_pos
+				else:
+					p_node.rpc_id(sender_id, "teleport_to", target_pos)
 
 @rpc("any_peer", "call_local")
 func add_to_inventory(p_rarity: String, p_price: int, p_color: Color) -> void:
