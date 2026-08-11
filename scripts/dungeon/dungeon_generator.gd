@@ -23,16 +23,23 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 var grid: Dictionary = {}
 
 func _ready() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	back_button.pressed.connect(_on_back_pressed)
+	# Verificăm dacă suntem scena principală sau un copil în Map1
+	if get_parent() == get_tree().root:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		back_button.pressed.connect(_on_back_pressed)
 
-	if multiplayer.is_server():
-		# Generăm structura hărții exclusiv pe server
-		generate_dungeon()
+		if multiplayer.is_server():
+			# Generăm structura hărții exclusiv pe server
+			generate_dungeon()
 
-		# Așteptăm un moment scurt pentru propagarea datelor pe rețea, apoi spawnăm jucătorii
-		await get_tree().create_timer(0.2).timeout
-		spawn_all_players()
+			# Așteptăm un moment scurt pentru propagarea datelor pe rețea, apoi spawnăm jucătorii
+			await get_tree().create_timer(0.2).timeout
+			spawn_all_players()
+	else:
+		# Suntem copil în Map1, deci Map1 se ocupă de inițializare, spawn playeri și UI.
+		# Dezactivăm CanvasLayer-ul de UI propriu ca să nu se suprapună cu cel din Map1.
+		if has_node("CanvasLayer"):
+			$CanvasLayer.queue_free()
 
 # --- DETECTOR DIRECȚII ---
 func get_dir_vector(dir: int) -> Vector2i:

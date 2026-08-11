@@ -341,14 +341,23 @@ func request_drop(p_rarity: String, p_price: int, p_color: Color, spawn_pos: Vec
 
 	# Instanțiem piesa de loot în lumea 3D de pe server
 	var loot_item = LOOT_SCENE.instantiate()
-	loot_item.position = spawn_pos
 
-	# Îl adăugăm la nodul "Loot" al generatorului de pe server
-	var loot_container = get_node_or_null("/root/DungeonGenerator/Loot")
+	# Găsim un container potrivit pentru loot în funcție de scena activă
+	var loot_container = null
+	var current_scene = get_tree().current_scene
+	if current_scene:
+		if current_scene.has_node("DungeonGenerator/Loot"):
+			loot_container = current_scene.get_node("DungeonGenerator/Loot")
+		elif current_scene.has_node("Loot"):
+			loot_container = current_scene.get_node("Loot")
+
 	if loot_container:
 		loot_container.add_child(loot_item, true)
 	else:
 		get_parent().add_child(loot_item, true)
+
+	# Setăm poziția GLOBALĂ după ce nodul a fost adăugat în arbore!
+	loot_item.global_position = spawn_pos
 
 	var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
 	loot_item.init_loot(unique_id, p_rarity, p_price, p_color)
