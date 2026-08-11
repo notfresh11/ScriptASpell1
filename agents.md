@@ -124,7 +124,7 @@ Apar în timpul rulării unui cod aparent valid, dar cu logică defectuoasă:
 
 *   **Infinite Loop (Bucla Infinită):** Jucătorul intră în spasme ragdoll necontrolate (corpul se rotește rapid, dărâmând totul în jur ca un titirez) și nu se poate opri până când un prieten nu vine să îi tragă fizic o palmă (Manual Reset prin atac melee).
 *   **Division by Zero:** Jucătorul se divide fizic în două jumătăți care fug în direcții diferite, sau se micșorează temporar până la dimensiunea unui atom, făcând ecranul lui să tremure violent.
-*   **Buffer Overflow:** Dacă încerci să forțezi valori peste limită (ex: `Sabie.Damage = 9999`), arma explodează violent, aruncându-te prin perete, lăsându-te în 5 HP și cu fața plină de funingine ca în desenele animate.
+*   **Buffer Overflow:** Dacă încerci să forțezi valori peste limită (ex: `Sabie.Damage = 9999`), arma explodează violent, aruncândute prin perete, lăsându-te în 5 HP și cu fața plină de funingine ca în desenele animate.
 
 ---
 
@@ -151,7 +151,7 @@ Un magazin ascuns în colțul bazei unde se vând piese "crăpate" (*cracked*) l
 
 *   **The Cookie Monsters:** Dacă accepți "cookies" de pe terminale medievale dubioase, se spawnează mici biscuiți fizici care se prind de corpul tău, făcându-te din ce în ce mai greu și mai încet, până când un coleg te curăță fizic.
 *   **The Latency Curse (Lag Magic):** Blestem aruncat de inamici sau bug-uri care aplică rubberbanding fizic (te teleportează înapoi 3 metri din mers) sau îți întârzie acțiunile cu 2 secunde.
-*   **The CAPTCHA Gates:** Poți deschide anumite uși de securitate doar dacă rezolvi rapid un CAPTCHA pe tabletă sub presiunea timpului (ex: "selectează toate pozele cu căruțe medievale").
+*   **The CAPTCHA Gates:** Poți deschide certain uși de securitate doar dacă rezolvi rapid un CAPTCHA pe tabletă sub presiunea timpului (ex: "selectează toate pozele cu căruțe medievale").
 *   **The Garbage Collector:** Un schelet uriaș cu o mătură din nuiele care patrulează prin dungeon și "șterge" fizic tot ce e lăsat pe jos: loot, capcane de cod active sau iteme temporare.
 *   **Pop-up Phantoms:** Fantome mici sub formă de ferestre de spam care îți blochează ecranul. Operatorul le poate închide de la distanță pe terminal, sau exploratorii le pot lovi fizic cu arma.
 *   **The Stack Overflow Ghost:** O masă amorfă de caractere roz neon luminoase și erori care bântuie dungeon-ul. Este creată din toate blocurile stricate și scripturile pe care Operatorul le-a aruncat în Recycle Bin și folosește propriile tale coduri șterse ca să te atace!
@@ -181,7 +181,10 @@ res://
 │   │   └── hot_tub.tscn
 │   ├── dungeon/             # Dungeon-ul procedural (MVP simple generator)
 │   │   ├── dungeon.tscn
-│   │   └── pit_room_base.tscn
+│   │   └── pieces/          # Piese modulare de grid 10x10 pentru generator
+│   │       ├── entrance_piece.tscn
+│   │       ├── hallway_piece.tscn
+│   │       └── ... (cele 7 piese color-coded)
 │   └── player/              # Scenele pentru jucători
 │       ├── explorer_player.tscn
 │       └── operator_player.tscn
@@ -222,17 +225,17 @@ extends Node
 signal error_intercepted(player_id: int, type: String)
 
 func trigger_syntax_crash(player_id: int, crash_type: String) -> void:
-    match crash_type:
-        "CHICKEN_PARTY":
-            rpc("apply_chicken_party", player_id)
-        "BACKROOMS":
-            rpc("teleport_to_backrooms", player_id)
+	match crash_type:
+		"CHICKEN_PARTY":
+			rpc("apply_chicken_party", player_id)
+		"BACKROOMS":
+			rpc("teleport_to_backrooms", player_id)
 
 @rpc("call_local", "reliable")
 func apply_chicken_party(player_id: int) -> void:
-    # Codul care înlocuiește modelul 3D cu o găină bouncy, activează ragdoll
-    # și modifică vocea sau dezactivează controalele de vrăji temporar.
-    pass
+	# Codul care înlocuiește modelul 3D cu o găină bouncy, activează ragdoll
+	# și modifică vocea sau dezactivează controalele de vrăji temporar.
+	pass
 ```
 
 ---
@@ -243,12 +246,12 @@ Această secțiune este de importanță critică pentru orice Agent AI care acce
 
 ### A. Reguli Fundamentale de Codare în Godot 4.x (GDScript)
 1.  **Static Typing Obligatoriu:** Folosește tipizarea statică peste tot unde este posibil pentru a asigura stabilitatea codului și auto-completarea corectă.
-    *   *Corect:* `var player_health: int = 100` sau `func calculate_ram(allocated: float) -> void`
-    *   *Incorect:* `var player_health = 100` sau `func calculate_ram(allocated)`
+	*   *Corect:* `var player_health: int = 100` sau `func calculate_ram(allocated: float) -> void`
+	*   *Incorect:* `var player_health = 100` sau `func calculate_ram(allocated)`
 2.  **Adnotări Noi:** Folosește sintaxa oficială de Godot 4:
-    *   `@onready var ...` (nu `onready var ...`)
-    *   `@export var ...` (nu `export var ...`)
-    *   `@rpc("any_peer")` (nu cuvântul cheie vechi `remote` sau `master`)
+	*   `@onready var ...` (nu `onready var ...`)
+	*   `@export var ...` (nu `export var ...`)
+	*   `@rpc("any_peer")` (nu cuvântul cheie vechi `remote` sau `master`)
 3.  **Separarea UI de Logică:** Niciun script de UI (User Interface) nu trebuie să conțină logică de gameplay directă. Folosește semnale pentru a notifica managerii despre acțiunile utilizatorului și lasă Singletons precum `GameManager` să decidă starea jocului.
 4.  **Fizica Haotică:** Pentru mecanicile bouncy și ragdoll, utilizează corect nodurile de fizică din Godot 4 (`CharacterBody3D` pentru mișcare controlată, `RigidBody3D` pentru obiecte aruncate, comori și simulări complet fizice).
 
@@ -263,3 +266,64 @@ Pentru a asigura că Agentul își amintește preferințele utilizatorului și d
 *   **Regula LL-01 (Scope Limit):** Focusul curent este pe un **Bare-bones game / MVP (Minimum Viable Product)**. Sistemul de Modding nativ și alte funcționalități extrem de avansate sunt amânate și nu reprezintă o prioritate.
 *   **Regula LL-02 (Godot Version Constraint):** Toate elementele de design tehnic și eventualele prototipuri de cod trebuie scrise exclusiv pentru **Godot 4.x** și **GDScript modern**.
 *   **Regula LL-03 (Language Boundary):** Documentul `agents.md` și comunicarea cu utilizatorul se vor desfășura în **limba română**, păstrând însă termenii tehnici consacrați în limba engleză (ex: *multiplayer, RPC, authority, ragdoll, debugging, loop, syntax, runtime, etc.*) pentru a menține precizia profesională.
+
+---
+
+## 11. RAPORT SESIUNI DE DEZVOLTARE & ISTORIC REZOLVĂRI BUGS
+
+### SESIUNEA 1: Implementare Lobby MVP, Platformă 3D de Test & Generator de Dungeon Procedural
+
+#### A. Unde suntem acum (Project State)
+Proiectul are un flux complet funcțional și robust de rețea (multiplayer bazat pe ENet în Godot 4.x):
+1.  **Meniu Principal Modular (`scenes/main_menu.tscn`):**
+    *   S-au implementat sub-panouri modulare adăugate direct în arborele de scene (cu proprietatea **Editable Children** activată, permițând navigarea și editarea vizuală directă): `StartPanel` (Create, Join, Settings, Exit), `JoinPanel` (IP/Port), `LobbyPanel` (4 sloturi de prieteni cu stări de Ready, nume lobby editabil), `SettingsPanel` (placeholder).
+2.  **Sistemul de Rețea (`scripts/autoload/network_manager.gd`):**
+    *   Autoload global ce gestionează crearea de lobby-uri ca Host și conectarea clienților prin IP/Port temporar (compatibil cu viitoarea integrare Steam Matchmaking).
+    *   Sincronizarea automată a numelui lobby-ului și a listei complete de clienți conectați.
+    *   Ready / Unready state complet sincronizat prin RPC-uri clare.
+3.  **Platforma de Testare 3D (`scenes/testing_platform.tscn`):**
+    *   Scenă 3D de bază unde jucătorii spawnează ca exploratori FPS (controler WASD + Spacebar, camera look capturat/eliberat perfect la ESC, fără erori de clipping prin dezactivarea vizibilității propriului corp local).
+    *   **Platforma Roșie (Expedition Gate):** O zonă de presiune (Area3D) în colț. Când toți jucătorii din lobby (ex. 1/1, 2/2) stau simultan pe ea, pornește automat un timer vizual și încarcă scena de expediție procedurală.
+4.  **Cele 7 Piese Modulare de Dungeon (`scenes/dungeon/pieces/`):**
+    *   Piese modulare color-coded pe un grid standard de 10x10 metri: `entrance` (albastru), `hallway` (gri închis), `corner` (gri deschis), `t_junction` (violet), `four_way` (indigo), `room` (portocaliu cu stâlpi), `dead_end` (verde).
+5.  **Generator de Dungeon Procedural (`scenes/dungeon/dungeon_generator.tscn` & `scripts/dungeon/dungeon_generator.gd`):**
+    *   Un algoritm bazat pe DFS/constraint-satisfaction pornește de la Entrance și alege aleator piese potrivind orientarea porturilor și a rotațiilor de 90 grade, cu o limitare strictă de dimensiune (`max_main_pieces: 10`).
+    *   Toate porturile rămase deschise către celule goale sunt sigilate automat cu piese Dead End verzi pentru a sigila complet harta 3D (astfel jucătorii nu pot cădea în void).
+    *   Poziționarea și rotația pieselor sunt complet replicate pe clienți.
+
+---
+
+#### B. Bugs Întâmpinate & Rezolvări Tehnice
+
+##### 1. Parse Error: Unknown tag 'ext_scene' in file (În .tscn files)
+*   **Problema:** Când am creat manual fișierele de scenă Godot text (`.tscn`), am utilizat greșit cuvântul cheie `ext_scene` pentru a importa scripturi și pachete (ex. `[ext_scene type="Script" ...]`). Acest lucru a blocat parserul oficial din Godot Engine 4.7.1, aruncând erori de tip "corrupt scene" sau "unknown tag".
+*   **Rezolvarea:** Am parcurs întregul codebase și am înlocuit corect toate aparițiile cu tag-ul standard acceptat de Godot: **`ext_resource`** (ex. `[ext_resource type="Script" ...]`).
+
+##### 2. Parse Error: Expected 4 arguments for constructor (Color constructor în .tscn)
+*   **Problema:** Materialele simple pentru piesele modulare au fost definite în format `.tscn` text ca `albedo_color = Color(r, g, b)`. Parserul Godot pentru fișiere de resurse text se așteaptă la exact **4 argumente** pentru constructorul `Color` (Red, Green, Blue, Alpha). Lipsa argumentului alpha a corupt scenele.
+*   **Rezolvarea:** Am actualizat toate declarările de culoare din fișierele `.tscn` la formatul complet cu 4 parametri, adăugând valoarea alpha `1` sau `1.0` (ex: `Color(0.2, 0.6, 1, 1)`).
+
+##### 3. Eroarea multiplayer !is_inside_tree() pe global_position
+*   **Problema:** Când serverul instanția jucătorii, scriptul încerca să atribuie poziția 3D prin `player_instance.global_position = ...` înainte de a adăuga nodul în arborele de scene. Acest lucru arunca erori majore deoarece un nod trebuie să fie în interiorul Tree-ului pentru a accesa coordonatele sale globale.
+*   **Rezolvarea:** Am mutat codul de poziționare după apelul de adăugare în arbore:
+    ```gdscript
+    players_node.add_child(player_instance)
+    player_instance.global_position = spawn_point.global_position
+    ```
+
+##### 4. Piese de Dungeon stivuite la (0,0,0) pe Clienți (Replicare MultiplayerSpawner)
+*   **Problema:** În Godot 4.x, `MultiplayerSpawner` detectează adăugarea unui nou copil și trimite un pachet de spawn clienților în momentul apelului `add_child()`. Dacă modificările de `position` și `rotation_degrees` sunt făcute după `add_child()`, clienții vor instanția piesa la poziția implicită `(0,0,0)`, fără a aplica offset-ul și rotația calculate de generator pe server.
+*   **Rezolvarea:** Am setat proprietățile locale de transformare direct pe instanță **înainte** de a o adăuga în arborele de scene:
+    ```gdscript
+    piece_instance.position = Vector3(target_cell.x * 10.0, 0.0, target_cell.y * 10.0)
+    piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
+    pieces_node.add_child(piece_instance)
+    ```
+
+##### 5. Conflictul tastei ESC (Mouse Capture)
+*   **Problema:** Atât scriptul de mișcare a jucătorului (`player_movement.gd`), cât și cel al platformei de test (`testing_platform.gd`) interceptau evenimentul de ESC (`ui_cancel`). Acest lucru făcea ca cele două scripturi să se "bată" pe cursor, rezultând într-un mouse ascuns/capturat continuu chiar și cu meniul deschis.
+*   **Rezolvarea:** Am eliminat controlul ESC din scriptul de mișcare, lăsând scriptul scenei (`testing_platform.gd` și `dungeon_generator.gd`) ca singura autoritate responsabilă de eliberarea cursorului și deschiderea meniului.
+
+##### 6. Blorarea vederii (Neon pink capsule) în First Person
+*   **Problema:** Camera fiind poziționată la înălțimea ochilor (`1.5m`) în interiorul capsulei de `1.8m` a modelului jucătorului, exploratorul local privea direct prin interiorul corpului său de culoare roz neon și prin vizorul albastru, rezultând într-un ecran obturat și glitch-uit vizual.
+*   **Rezolvarea:** Am adăugat o verificare la inițializarea autorității locale a jucătorului. Dacă suntem autoritatea locală, ascundem propriul `MeshInstance3D` al corpului (`mesh_instance.visible = false`). Clienții conectați pe rețea vor continua să ne vadă capsula în mod normal, în timp ce ecranul nostru va fi perfect curat!
