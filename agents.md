@@ -364,3 +364,45 @@ Proiectul are acum un sistem de interacțiune, economie și inventar extrem de s
 ##### 3. Pixelarea textului și a elementelor 2D la rezoluție mare (1920x1080)
 *   **Problema:** Schimbarea rezoluției din editor la 1920x1080 fără definirea explicită a viewport-ului de bază în setări cauza o pixelare și scalare urâtă a textului și a HUD-ului.
 *   **Rezolvarea:** Am configurat explicit rezoluția de bază a viewport-ului la 1920x1080 în `project.godot` sub secțiunea `[display]`, asigurând un rendering crisp și de înaltă definiție pentru interfață.
+
+---
+
+## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
+
+Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.
+
+### A. Fluxul Principal de Gameplay (The Data Pipeline)
+
+1.  **Digitizarea locală (Exploratorii):**
+    *   Când un explorator găsește un cub de loot în dungeon, el nu îl pune într-un rucsac fizic, ci îl scanează cu tableta.
+    *   La scanare, obiectul fizic este de-alocat din simulare (dispare din 3D Space), iar proprietățile lui (`rarity`, `price`, `item_color`) sunt stocate virtual în tableta exploratorului sub formă de fișier de date (ex: `loot_834.dat`).
+    *   **Limita de Stocare (Local Buffer):** Tableta are un spațiu limitat de buffer (ex: **50MB**). Fiecare tip de raritate ocupă o dimensiune diferită:
+        *   *Common:* 5MB (Valoare mică, dar ocupă spațiu).
+        *   *Uncommon:* 10MB.
+        *   *Rare:* 20MB.
+        *   *Epic:* 35MB (Valoare uriașă, ocupă mult spațiu).
+    *   Dacă stocarea este plină (`100% Buffer Overflow`), exploratorul nu mai poate scana alte obiecte. El va trebui fie să le poarte fizic în mână (ocupând slot-ul activ, făcându-l incapabil să folosească alte unelte), fie să aștepte ca Operatorul să descarce datele.
+
+2.  **Descărcarea de Date (Git Pull de la Operator):**
+    *   La terminalul de monitorizare din buncăr, Operatorul vede starea stocării exploratorilor în timp real: `Explorer_1 Storage: 45MB/50MB [Ready to Pull]`.
+    *   Operatorul trebuie să ruleze comanda text `git pull explorer_1` sau să apese un buton pe interfață pentru a începe descărcarea.
+    *   **Viteza și Interferențele (Latency & Blockers):**
+        *   Descărcarea durează câteva secunde.
+        *   Viteza de transfer scade dacă exploratorul este foarte departe în dungeon, dacă se află în camere adânci cu interferențe runice, sau dacă un inamic bruiază semnalul.
+        *   Dacă descărcarea este completă (100%), buffer-ul local al exploratorului se resetează la `0MB`, iar banii sunt transferați instantaneu în soldul buncărului pentru îndeplinirea cotației (**Quota**).
+
+3.  **Moartea Jucătorului și Recuperarea Hard Disk-ului (The Hard Disk Drop):**
+    *   Dacă un explorator moare în dungeon înainte ca datele din buffer-ul lui să fie descărcate de Operator, tot loot-ul nescărcat este salvat local într-un **Hard Disk fizic masiv și strălucitor (HDD-ul de Urgență)** care cade pe jos lângă corpul său.
+    *   Coechipierii rămași în viață trebuie să meargă la locul decesului, să ridice fizic HDD-ul în mână și să-l transporte în buncăr pentru a downloada manual datele. Dacă HDD-ul este abandonat sau pierdut, toate acele obiecte scanate sunt șterse definitiv din memorie.
+
+4.  **Jocul fără Operator (No-Operator Mode):**
+    *   Dacă echipa decide să joace fără Operator (sau joacă solo), ei pot stoca în continuare iteme scanate pe tabletă până la limita de 50MB.
+    *   Pentru a le descărca, ei trebuie să se întoarcă fizic în buncăr la sfârșitul expediției, să acceseze terminalul central și să ruleze manual procesul de descărcare (Git Pull), rămânând vulnerabili la ambuscade în timp ce procesul rulează lent.
+
+### B. Mecanici Secundare & Riscuri (Cyber-Medieval Hazards)
+
+1.  **Coruperea Datelor (Data Corruption & Glitches):**
+    *   Dacă un explorator este lovit de un monstru sau stă prea mult în zone instabile din dungeon, fișierele de date din tabletă pot începe să se corupă.
+    *   Valoarea în bani a itemelor scade cu 1% pe secundă. Operatorul poate rula un protocol de deparazitare sau curățare de pe terminal (`git clean` sau `antivirus_scan`) pentru a opri degradarea.
+2.  **Blocul de Scriptare Unic (The Auto-Transfer Block):**
+    *   Un bloc Scratch special ce poate fi cumpărat din magazin, numit `PushBlock()` sau `TransmitSpell()`. Jucătorii își pot programa tableta sau armele să uploadeze automat buffer-ul de date în buncăr în anumite condiții (ex: `if (speed == 0) -> PushBlock()`), cu un consum suplimentar de Mana-Credits.
