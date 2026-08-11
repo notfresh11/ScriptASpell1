@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_scene type="Script" path="res://scripts/dungeon/dungeon_generator.gd" id="1_dungeon_generator"]
+[ext_resource type="Script" path="res://scripts/dungeon/dungeon_generator.gd" id="1_dungeon_generator"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.02, 0.02, 0.04, 1)
