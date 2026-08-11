@@ -278,7 +278,7 @@ func request_pickup(item_path: NodePath) -> void:
 		# Notificăm clientul trimițător să îl adauge în inventar
 		rpc_id(sender_id, "add_to_inventory", item_rarity, item_price, item_color)
 
-@rpc("authority", "call_local")
+@rpc("any_peer", "call_local")
 func add_to_inventory(p_rarity: String, p_price: int, p_color: Color) -> void:
 	var empty_slot = inventory.find(null)
 	if empty_slot != -1:
