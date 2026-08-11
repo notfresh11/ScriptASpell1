@@ -1,0 +1,85 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_scene type="Script" path="res://scripts/dungeon/dungeon_generator.gd" id="1_dungeon_generator"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.02, 0.02, 0.04, 1)
+sky_horizon_color = Color(0.04, 0.04, 0.06, 1)
+ground_bottom_color = Color(0, 0, 0, 1)
+
+[sub_resource type="Sky" id="Sky_env"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_dungeon"]
+background_mode = 2
+sky = SubResource("Sky_env")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+
+[node name="DungeonGenerator" type="Node3D"]
+script = ExtResource("1_dungeon_generator")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_dungeon")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
+light_color = Color(0.6, 0.7, 0.8, 1)
+light_energy = 0.3
+shadow_enabled = true
+
+[node name="Pieces" type="Node3D" parent="."]
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="PieceSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/dungeon/pieces/entrance_piece.tscn", "res://scenes/dungeon/pieces/hallway_piece.tscn", "res://scenes/dungeon/pieces/corner_piece.tscn", "res://scenes/dungeon/pieces/t_junction_piece.tscn", "res://scenes/dungeon/pieces/four_way_piece.tscn", "res://scenes/dungeon/pieces/room_piece.tscn", "res://scenes/dungeon/pieces/dead_end_piece.tscn")
+spawn_path = NodePath("../Pieces")
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/player/explorer_player.tscn")
+spawn_path = NodePath("../Players")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Expedition Menu"
+horizontal_alignment = 1
+
+[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Leave Expedition"
