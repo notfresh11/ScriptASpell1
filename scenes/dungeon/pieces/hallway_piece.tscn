@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://blw54u4fdpgsf"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
 albedo_color = Color(0.2, 0.2, 0.23, 1)
@@ -8,23 +8,23 @@ roughness = 0.8
 albedo_color = Color(0.1, 0.1, 0.12, 1)
 roughness = 0.9
 
-[node name="HallwayPiece" type="Node3D"]
+[node name="HallwayPiece" type="Node3D" unique_id=1585962866]
 metadata/open_ports = [true, false, true, false]
 
-[node name="Floor" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1140039874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.028463334, -0.0413023, 0.05157423)
 use_collision = true
-size = Vector3(10, 0.2, 10)
+size = Vector3(5.5889893, 0.2, 10)
 material = SubResource("StandardMaterial3D_floor")
 
-[node name="Wall_East" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 1.5, 0)
+[node name="Wall_East" type="CSGBox3D" parent="." unique_id=424749698]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8516057, 0.053164482, -0.06851053)
 use_collision = true
-size = Vector3(0.2, 3, 10)
+size = Vector3(0.2, 0.25134277, 10)
 material = SubResource("StandardMaterial3D_wall")
 
-[node name="Wall_West" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 1.5, 0)
+[node name="Wall_West" type="CSGBox3D" parent="." unique_id=1582557130]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8791885, 0.14593506, 0)
 use_collision = true
-size = Vector3(0.2, 3, 10)
+size = Vector3(0.2, 0.29187012, 10)
 material = SubResource("StandardMaterial3D_wall")

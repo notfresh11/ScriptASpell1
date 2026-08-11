@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://dn0cmv8crrhv5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
 albedo_color = Color(0.6, 0.1, 0.8, 1)
@@ -8,17 +8,17 @@ roughness = 0.8
 albedo_color = Color(0.3, 0.05, 0.4, 1)
 roughness = 0.9
 
-[node name="TJunctionPiece" type="Node3D"]
+[node name="TJunctionPiece" type="Node3D" unique_id=586409718]
 metadata/open_ports = [true, true, false, true]
 
-[node name="Floor" type="CSGBox3D" parent="."]
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1695430583]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 use_collision = true
 size = Vector3(10, 0.2, 10)
 material = SubResource("StandardMaterial3D_floor")
 
-[node name="Wall_South" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 4.9)
+[node name="Wall_South" type="CSGBox3D" parent="." unique_id=802585179]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.111572266, 4.9)
 use_collision = true
-size = Vector3(10, 3, 0.2)
+size = Vector3(10, 0.22314453, 0.2)
 material = SubResource("StandardMaterial3D_wall")
