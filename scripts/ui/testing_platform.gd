@@ -111,7 +111,7 @@ func check_for_expedition_start() -> void:
 
 @rpc("call_local", "reliable")
 func load_procedural_dungeon() -> void:
-	get_tree().change_scene_to_file("res://scenes/dungeon/dungeon_generator.tscn")
+	get_tree().change_scene_to_file("res://scenes/map1/map1.tscn")
 
 # --- BACK MENU ---
 func _on_back_pressed() -> void:
