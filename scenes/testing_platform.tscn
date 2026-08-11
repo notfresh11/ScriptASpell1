@@ -41,20 +41,20 @@ emission = Color(0.4, 0, 0, 1)
 [node name="TestingPlatform" type="Node3D"]
 script = ExtResource("1_testing_platform")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1472851622]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_world")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1943378397]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 15, 0)
 shadow_enabled = true
 
-[node name="Floor" type="StaticBody3D" parent="." unique_id=1057106304]
+[node name="Floor" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=1216653986]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
 shape = SubResource("BoxShape3D_floor")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor" unique_id=1937678020]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
 mesh = SubResource("BoxMesh_floor")
 surface_material_override/0 = SubResource("StandardMaterial3D_floor_mat")
 
@@ -71,25 +71,25 @@ surface_material_override/0 = SubResource("StandardMaterial3D_red_mat")
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 
-[node name="Point1" type="Marker3D" parent="SpawnPoints" unique_id=1956647357]
+[node name="Point1" type="Marker3D" parent="SpawnPoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, -5)
 
-[node name="Point2" type="Marker3D" parent="SpawnPoints" unique_id=394580956]
+[node name="Point2" type="Marker3D" parent="SpawnPoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -5)
 
-[node name="Point3" type="Marker3D" parent="SpawnPoints" unique_id=1512710169]
+[node name="Point3" type="Marker3D" parent="SpawnPoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, 5)
 
-[node name="Point4" type="Marker3D" parent="SpawnPoints" unique_id=68590339]
+[node name="Point4" type="Marker3D" parent="SpawnPoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 5)
 
-[node name="Players" type="Node3D" parent="." unique_id=105640145]
+[node name="Players" type="Node3D" parent="."]
 
-[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1054352721]
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
 _spawnable_scenes = PackedStringArray("res://scenes/player/explorer_player.tscn")
 spawn_path = NodePath("../Players")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1756106151]
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="LobbyTrackerContainer" type="MarginContainer" parent="CanvasLayer"]
 anchors_preset = 5
@@ -127,7 +127,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="CanvasLayer/Control" unique_id=1314555874]
+[node name="Panel" type="Panel" parent="CanvasLayer/Control"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -135,7 +135,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control" unique_id=1378724635]
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -143,17 +143,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer" unique_id=813196625]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox" unique_id=2014996697]
+[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Testing Platform Menu"
 horizontal_alignment = 1
 
-[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox" unique_id=337356498]
+[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
