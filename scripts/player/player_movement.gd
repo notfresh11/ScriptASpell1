@@ -14,9 +14,13 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var player_id: int = 1 :
 	set(value):
 		player_id = value
-		set_multiplayer_authority(player_id)
-		if is_multiplayer_authority() and is_node_ready():
-			_setup_local_player()
+		if is_inside_tree():
+			set_multiplayer_authority(player_id)
+			if is_multiplayer_authority() and is_node_ready():
+				_setup_local_player()
+
+func _enter_tree() -> void:
+	set_multiplayer_authority(player_id)
 
 # Replicat pentru rețea ca să vadă ceilalți jucători ce avem în mână
 @export var active_item_color: Color = Color(0, 0, 0, 0) :

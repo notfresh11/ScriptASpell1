@@ -44,7 +44,7 @@ func spawn_player(player_id: int) -> void:
 	var spawn_point: Marker3D = spawn_points.get_child(spawn_index)
 
 	# Adăugăm mai întâi nodul în arbore pentru a evita avertismentul global_position !is_inside_tree()
-	players_node.add_child(player_instance)
+	players_node.add_child(player_instance, true)
 	player_instance.global_position = spawn_point.global_position
 
 func _on_player_connected(id: int) -> void:
