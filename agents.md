@@ -387,6 +387,10 @@ Proiectul are acum un Game Loop complet funcțional în stil *Lethal Company*, o
 * **Problema:** Inițial, ușa din interiorul dungeon-ului era generată dinamic de server la pornire și adăugată ca și copil în generator. Fără un `MultiplayerSpawner` configurat special să asculte de noi uși, clienții nu instanțiau ușa local, neputând să o vadă sau să interacționeze cu ea.
 * **Rezolvarea:** Am simplificat și optimizat designul, plasând ambele uși (`ExteriorDoor` și `InteriorDoor`) static în scena `map1.tscn` la încărcare. Acest lucru garantează că toți clienții încarcă și instanțiază ușile instantaneu și sincron, serverul ocupându-se doar de corelarea și sincronizarea destinațiilor de teleportare (`target_position`) prin RPC la început.
 
+##### 2. Eșecul de Teleportare al Clienților prin Uși din cauza Autorității Rețelei (MultiplayerAuthority)
+* **Problema:** Când un jucător client apăsa tasta `E` pe o ușă, serverul primea cererea de teleportare și încerca să seteze direct coordonatele jucătorului (`p_node.global_position = target_pos`). Însă, deoarece clienții dețin autoritatea rețelei (`MultiplayerAuthority`) asupra propriului lor nod de mișcare FPS, orice modificare de poziție făcută pe server era complet ignorată și suprascrisă în cadrul următor de sincronizarea automată (`MultiplayerSynchronizer`) a clientului, blocând teleportarea.
+* **Rezolvarea:** Am implementat o funcție RPC suplimentară de teleportare securizată numită `teleport_to(target_pos: Vector3)` pe clienți. Serverul identifică acum peer-ul care a solicitat teleportarea, iar în loc să-i forțeze poziția direct, trimite un apel `rpc_id` către acel client specific (dacă este client conectat) sau aplică poziția local direct (dacă este Host-ul/Serverul local). Clientul își setează astfel local noua poziție, iar `MultiplayerSynchronizer` o propagă de jos în sus, garantând o teleportare sigură și bidirecțională (intrare/ieșire din dungeon) fără pierderi de pachete.
+
 ---
 
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
