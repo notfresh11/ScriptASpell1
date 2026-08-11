@@ -302,9 +302,9 @@ func request_drop(p_rarity: String, p_price: int, p_color: Color, spawn_pos: Vec
 	# Îl adăugăm la nodul "Loot" al generatorului de pe server
 	var loot_container = get_node_or_null("/root/DungeonGenerator/Loot")
 	if loot_container:
-		loot_container.add_child(loot_item)
+		loot_container.add_child(loot_item, true)
 	else:
-		get_parent().add_child(loot_item)
+		get_parent().add_child(loot_item, true)
 
 	var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
 	loot_item.init_loot(unique_id, p_rarity, p_price, p_color)
