@@ -498,7 +498,7 @@ func spawn_loot_at(pos: Vector3) -> void:
 
 	# Setăm poziția înainte de add_child
 	loot_instance.position = pos + Vector3(randf_range(-1.5, 1.5), 0.5, randf_range(-1.5, 1.5))
-	loot_node.add_child(loot_instance)
+	loot_node.add_child(loot_instance, true)
 
 	# Inițializăm proprietățile sincronizate prin rețea
 	loot_instance.init_loot(unique_id, rarity, price, color)

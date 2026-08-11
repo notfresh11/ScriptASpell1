@@ -266,6 +266,9 @@ Pentru a asigura că Agentul își amintește preferințele utilizatorului și d
 *   **Regula LL-01 (Scope Limit):** Focusul curent este pe un **Bare-bones game / MVP (Minimum Viable Product)**. Sistemul de Modding nativ și alte funcționalități extrem de avansate sunt amânate și nu reprezintă o prioritate.
 *   **Regula LL-02 (Godot Version Constraint):** Toate elementele de design tehnic și eventualele prototipuri de cod trebuie scrise exclusiv pentru **Godot 4.x** și **GDScript modern**.
 *   **Regula LL-03 (Language Boundary):** Documentul `agents.md` și comunicarea cu utilizatorul se vor desfășura în **limba română**, păstrând însă termenii tehnici consacrați în limba engleză (ex: *multiplayer, RPC, authority, ragdoll, debugging, loop, syntax, runtime, etc.*) pentru a menține precizia profesională.
+*   **Regula LL-04 (Multiplayer Spawner Names):** Atunci când instanțiem scene dinamice în rețea care sunt replicate prin `MultiplayerSpawner`, adăugarea lor în arborele de scene trebuie făcută exclusiv prin `add_child(node, true)`. Argumentul `true` forțează generarea de nume lizibile și valide în rețea (evitând caracterele speciale precum `@` din `@RigidBody3D@105`), lucru esențial pentru ca auto-spawn-ul să funcționeze corect fără erori de rețea.
+*   **Regula LL-05 (Mouse Filter & Input Event):** Pentru a preveni ca elementele din HUD sau alte panouri de control 2D să blocheze rotația camerei sau mișcarea mouse-ului, rotația trebuie procesată în funcția `_input(event)` (nu în `_unhandled_input(event)`). De asemenea, toate elementele UI de tip `Control` trebuie configurate cu `mouse_filter = MOUSE_FILTER_IGNORE` (`2`) dacă nu necesită interacțiune directă cu mouse-ul.
+*   **Regula LL-06 (Dungeon Grid Alignment):** Toate piesele modulare de dungeon trebuie modelate pe un grid pătrat matematic fix de exact `10x10` metri, cu originea locală la `(0, 0, 0)`. Această scală exterioară este obligatorie pentru a asigura îmbinarea perfectă fără spații/goluri (void) sau suprapuneri, indiferent de cât de înguste sau întortocheate sunt coridoarele din interiorul piesei.
 
 ---
 
@@ -327,3 +330,37 @@ Proiectul are un flux complet funcțional și robust de rețea (multiplayer baza
 ##### 6. Blorarea vederii (Neon pink capsule) în First Person
 *   **Problema:** Camera fiind poziționată la înălțimea ochilor (`1.5m`) în interiorul capsulei de `1.8m` a modelului jucătorului, exploratorul local privea direct prin interiorul corpului său de culoare roz neon și prin vizorul albastru, rezultând într-un ecran obturat și glitch-uit vizual.
 *   **Rezolvarea:** Am adăugat o verificare la inițializarea autorității locale a jucătorului. Dacă suntem autoritatea locală, ascundem propriul `MeshInstance3D` al corpului (`mesh_instance.visible = false`). Clienții conectați pe rețea vor continua să ne vadă capsula în mod normal, în timp ce ecranul nostru va fi perfect curat!
+
+---
+
+### SESIUNEA 2: Implementare Sistem Loot, Inventar 4 Sloturi, HUD & Rezolvare Bug-uri Rețea și Rezoluție
+
+#### A. Unde suntem acum (Project State)
+Proiectul are acum un sistem de interacțiune, economie și inventar extrem de solid și sincronizat în rețea:
+1.  **Sistem de Loot Sincronizat:**
+    *   S-au implementat cuburile de loot de 1x1m (`scenes/interactables/loot_item.tscn`) care folosesc fizică (`RigidBody3D`) și se colorează în funcție de raritate (Common - gri, Uncommon - verde, Rare - galben, Epic - mov).
+    *   Prețurile sunt generate aleatoriu pe server în funcție de raritate, iar proprietățile (`rarity`, `price`, `item_color`) sunt sincronizate instantaneu prin `MultiplayerSynchronizer` către toți clienții prin intermediul unui setter reactiv în `loot_item.gd`.
+2.  **Inventar și HUD de Tip Lethal Company:**
+    *   HUD complet integrat pe ecranul exploratorului, conținând un punct fin pe post de crosshair și o bară de inventar cu 4 sloturi.
+    *   Tastele `1-4` schimbă slotul activ, actualizând stilul vizual în HUD (cu highlight cyan neon pentru slotul activ).
+    *   Ridicarea obiectelor (`E`) folosește un RayCast3D local, trimite un RPC server-authoritative (`request_pickup`) de validare pentru a evita preluările multiple simultane, șterge obiectul din scenă și îl adaugă în primul slot liber al jucătorului.
+    *   Aruncarea/drop-ul (`Q`) solicită serverului să instanțieze obiectul și să-i aplice o viteză fizică în direcția privirii camerei.
+3.  **Vizualizare în Mână (Hand Visuals):**
+    *   Local (First-Person): Jucătorul își vede propriul cub plutind în mână în fața camerei.
+    *   Multiplayer (Third-Person): Alți jucători văd un mic cub colorat atașat de modelul (capsula) partenerului lor atunci când acesta ține ceva în mână, datorită sincronizării culorii prin `MultiplayerSynchronizer`.
+
+---
+
+#### B. Bugs Întâmpinate & Rezolvări Tehnice
+
+##### 1. Blocarea rotației camerei FPS din cauza mouse_filter-ului de HUD
+*   **Problema:** După adăugarea panourilor de HUD, controlul mouse-ului pentru rotația camerei s-a blocat complet. În Godot 4, elementele UI de tip Control consumă implicit evenimentele de input.
+*   **Rezolvarea:** Am setat proprietatea `mouse_filter = MOUSE_FILTER_IGNORE` (2) pe toate elementele din HUD în `.tscn` și am mutat codul de rotație din `_unhandled_input(event)` în `_input(event)` în scriptul `player_movement.gd`. Acest lucru garantează că rotația mouse-ului este interpretată prima, înainte ca elementele UI să o poată intercepta.
+
+##### 2. Eroarea de rețea `Unable to auto-spawn node with reserved name: @RigidBody3D@...`
+*   **Problema:** Atunci când un jucător dădea drop la un obiect, serverul instanția un `RigidBody3D` nou și îl adăuga în arbore. Godot îi genera un nume intern precum `@RigidBody3D@105`. Caracterul `@` este rezervat, iar `MultiplayerSpawner` refuza să replice nodul pe clienți, aruncând erori de spawning.
+*   **Rezolvarea:** Am apelat `add_child(loot_item, true)` pe server. Al doilea argument (`true`) forțează Godot să genereze exclusiv nume lizibile și sigure în rețea (ex: `LootItem`, `LootItem2`), rezolvând complet desincronizarea.
+
+##### 3. Pixelarea textului și a elementelor 2D la rezoluție mare (1920x1080)
+*   **Problema:** Schimbarea rezoluției din editor la 1920x1080 fără definirea explicită a viewport-ului de bază în setări cauza o pixelare și scalare urâtă a textului și a HUD-ului.
+*   **Rezolvarea:** Am configurat explicit rezoluția de bază a viewport-ului la 1920x1080 în `project.godot` sub secțiunea `[display]`, asigurând un rendering crisp și de înaltă definiție pentru interfață.
