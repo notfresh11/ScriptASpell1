@@ -278,7 +278,7 @@ func generate_dungeon() -> void:
 	var entrance_instance: Node3D = ENTRANCE_SCENE.instantiate()
 	entrance_instance.name = "Piece_0_0"
 	entrance_instance.position = Vector3(0, 0, 0)
-	pieces_node.add_child(entrance_instance)
+	pieces_node.add_child(entrance_instance, true)
 
 	grid[Vector2i(0, 0)] = {
 		"path": ENTRANCE_SCENE.resource_path,
@@ -306,7 +306,7 @@ func generate_dungeon() -> void:
 		piece_instance.position = Vector3(cell.x * 10.0, 0.0, cell.y * 10.0)
 		piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
 
-		pieces_node.add_child(piece_instance)
+		pieces_node.add_child(piece_instance, true)
 
 		grid[cell] = {
 			"path": chosen["path"],
@@ -332,7 +332,7 @@ func generate_dungeon() -> void:
 		piece_instance.position = Vector3(cell.x * 10.0, 0.0, cell.y * 10.0)
 		piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
 
-		pieces_node.add_child(piece_instance)
+		pieces_node.add_child(piece_instance, true)
 
 		grid[cell] = {
 			"path": chosen["path"],
@@ -383,7 +383,7 @@ func generate_dungeon() -> void:
 		piece_instance.position = Vector3(target_cell.x * 10.0, 0.0, target_cell.y * 10.0)
 		piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
 
-		pieces_node.add_child(piece_instance)
+		pieces_node.add_child(piece_instance, true)
 
 		grid[target_cell] = {
 			"path": chosen["path"],
@@ -432,7 +432,7 @@ func generate_dungeon() -> void:
 		dead_end_instance.position = Vector3(target_cell.x * 10.0, 0.0, target_cell.y * 10.0)
 		dead_end_instance.rotation_degrees.y = -rot_steps * 90.0
 
-		pieces_node.add_child(dead_end_instance)
+		pieces_node.add_child(dead_end_instance, true)
 
 		grid[target_cell] = {
 			"path": DEAD_END_SCENE.resource_path,
