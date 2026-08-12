@@ -401,6 +401,41 @@ Proiectul are acum un Game Loop complet funcțional în stil *Lethal Company*, o
 
 ---
 
+### SESIUNEA 4: Implementare Core Loop Evacuare, Platformă Verde, Ștergere Inventar & Auto-vânzare în Lobby
+
+#### A. Unde suntem acum (Project State)
+Proiectul are acum un Game Loop complet și robust la nivel de MVP (Minimum Viable Product):
+1. **Platforma Verde de Colectare & Evacuare (Green Platform):**
+   * Creată o scenă 3D de platformă verde reutilizabilă (`scenes/interactables/green_platform.tscn` și `scripts/interactables/green_platform.gd`) integrată în `map1.tscn` și `testing_platform.tscn`.
+2. **Mecanica de Countdown Sincronizată pe Server (Confirmation & Escape):**
+   * Când toți jucătorii activi sunt prezenți pe platforma verde exterioară, pornește un timer de confirmare de 10 secunde (se anulează instantaneu dacă un jucător părăsește platforma).
+   * La finalul confirmării, se activează numărătoarea inversă de evacuare de 15 secunde.
+   * Jucătorii lăsați în urmă sunt eliminați fizic și își pierd tot inventarul.
+3. **Wipe total de inventar la evacuare (Core Loop Carryover Fix):**
+   * Orice item ținut în inventar sau în mână este complet șters la evacuare prin RPC-uri clare de curățare a inventarului (`clear_inventory`), respectând regula de a nu putea căra obiecte în mână la teleportarea în lobby.
+4. **Teleportare physical-loot și Spawning în Lobby:**
+   * Doar itemele (loot-ul) aflate fizic pe platforma verde exterioară la scurngerea timpului sunt salvate în `NetworkManager` și teleportate/spawnate în lobby pe platforma verde interioară.
+5. **Auto-vânzare în Lobby cu delay de 5 secunde:**
+   * Loot-ul spawnat sau adus manual pe platforma din Lobby are un delay de 5.0 secunde (oferind feedback vizual direct jucătorilor) înainte de a fi vândut automat, adăugând credite în soldul global (`team_credits`).
+6. **HUD HUD credite și countdown:**
+   * Adăugate elementele dinamice `CreditsLabel` (stânga sus) și `EscapeLabel` (centru sus, sincronizată prin RPC) pe interfața jucătorului.
+
+#### B. Bugs Întâmpinate & Rezolvări Tehnice
+
+##### 1. Eșec de detecție loot pe platformă (Collision Mask)
+* **Problema:** Platforma verde avea `collision_mask = 3`, dar loot items au `collision_layer = 4` (bit 3). Am crescut masca la `collision_mask = 7` (detectează și layer 2 de jucători, și layer 4 de loot).
+* **Rezolvarea:** Am actualizat `collision_mask = 7` pe Area3D a platformei verzi în `.tscn` pentru a intercepta și înregistra corect obiectele de loot.
+
+##### 2. Duplicare / Reapariție iteme din inventar (Stale Inventory State)
+* **Problema:** Itemele din mâini reapăreau când jucătorii se întorceau în expediție deoarece inventarele erau memorate persistente. Am scos salvarea inventarului pentru a forța carryover strict bazat pe platformă (no inventory keep on escape).
+* **Rezolvarea:** Am implementat RPC-ul `clear_inventory` pe player_movement, apelat pe server la evacuare pentru a asigura un wipe complet al inventarului pe toți clienții.
+
+##### 3. Vânzare fantomă (Race condition)
+* **Problema:** Dacă un jucător ridica o piesă de pe platforma din lobby în cele 5 secunde, piesa se vindea în continuare și dispărea din mână.
+* **Rezolvarea:** Am adăugat o verificare `if not loot_node in loot_on_platform: return` în funcția de vânzare pentru a opri vânzarea automată dacă piesa este ridicată în timpul delay-ului de 5 secunde.
+
+---
+
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
 
 Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.
