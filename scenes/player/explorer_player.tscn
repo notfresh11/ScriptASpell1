@@ -23,7 +23,7 @@ albedo_color = Color(0, 1, 0.8, 1)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_retro"]
 render_priority = 0
 shader = ExtResource("2_retro_shader")
-shader_parameter/dither_opacity = 0.8
+shader_parameter/dither_opacity = 0.4
 shader_parameter/dither_scale = 3.0
 shader_parameter/color_depth = 8.0
 shader_parameter/scanline_opacity = 0.15
@@ -130,7 +130,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 stretch = true
-stretch_shrink = 3
+stretch_shrink = 2
 
 [node name="SubViewport" type="SubViewport" parent="RetroScreen/SubViewportContainer"]
 handle_input_locally = false
