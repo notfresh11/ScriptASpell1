@@ -57,6 +57,13 @@ var puppet_hand_item: MeshInstance3D = null
 var local_hand_item: MeshInstance3D = null
 
 func _ready() -> void:
+	add_to_group("players")
+
+	# Restore inventory from saved state if any
+	if player_id in NetworkManager.saved_inventories:
+		inventory = NetworkManager.get_saved_inventory(player_id)
+		_update_active_hand_color()
+
 	_init_styles()
 	_setup_input_actions()
 	_setup_hand_visuals()
@@ -412,6 +419,10 @@ func _update_hud() -> void:
 	else:
 		active_item_label.text = "Holding: Nothing"
 		active_item_label.self_modulate = Color(1, 1, 1, 0.7)
+
+	# Actualizăm eticheta de credite
+	if hud.has_node("CreditsLabel"):
+		hud.get_node("CreditsLabel").text = "Credits: $%d" % NetworkManager.team_credits
 
 # --- REPLICATE HAND MESH VISIBILITY ---
 func _update_hand_visual_for_all() -> void:

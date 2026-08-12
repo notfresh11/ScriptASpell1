@@ -17,6 +17,12 @@ var players: Dictionary = {} # Structură: { id (int): { "name": String, "ready"
 var lobby_name: String = "My Amazing Lobby"
 var local_player_name: String = "Player"
 
+# Persistență date între nivele (Core Game Loop)
+var team_credits: int = 0
+var saved_inventories: Dictionary = {} # player_id: Array of 4 items
+var saved_escaped_loot: Array = [] # list of dicts: rarity, price, color
+var survivor_player_ids: Array[int] = []
+
 # Referință la peer-ul activ
 var peer: ENetMultiplayerPeer = null
 
@@ -161,3 +167,29 @@ func get_local_ip() -> String:
 		if ip.count(".") == 3 and not ip.begins_with("127.") and not ip.begins_with("169.254."):
 			return ip
 	return "127.0.0.1"
+
+# --- PERSISTENCE AND COLO LOGIC HELPERS ---
+func save_player_inventory(player_id: int, inventory: Array) -> void:
+	saved_inventories[player_id] = inventory.duplicate(true)
+
+func get_saved_inventory(player_id: int) -> Array:
+	if player_id in saved_inventories:
+		return saved_inventories[player_id].duplicate(true)
+	return [null, null, null, null]
+
+func save_escaped_session(survivor_ids: Array[int], loot_data: Array) -> void:
+	survivor_player_ids = survivor_ids
+	saved_escaped_loot = loot_data.duplicate(true)
+
+func add_credits(amount: int) -> void:
+	if multiplayer.is_server():
+		rpc("sync_credits", team_credits + amount)
+
+@rpc("call_local", "reliable")
+func sync_credits(new_amount: int) -> void:
+	team_credits = new_amount
+	# Notificăm toate nodurile de player local să își updateze HUD-ul
+	var players_nodes = get_tree().get_nodes_in_group("players")
+	for p in players_nodes:
+		if p.has_method("_update_hud"):
+			p._update_hud()
