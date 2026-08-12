@@ -108,8 +108,8 @@ func _on_body_entered(body: Node3D) -> void:
 
 		# Dacă este platforma din lobby, vindem automat orice loot intră pe ea!
 		if is_lobby_platform:
-			# Un mic delay de 0.1s pentru ca fizica să se așeze înainte de ștergere
-			get_tree().create_timer(0.1).timeout.connect(func(): _sell_loot_item(body))
+			# Un delay de 5.0s pentru ca jucătorii să poată vedea fizic itemele pe platformă!
+			get_tree().create_timer(5.0).timeout.connect(func(): _sell_loot_item(body))
 
 func _on_body_exited(body: Node3D) -> void:
 	if not multiplayer.is_server():
@@ -126,12 +126,15 @@ func _sell_loot_item(loot_node: Node3D) -> void:
 	if not is_instance_valid(loot_node):
 		return
 
+	# Dacă jucătorul a ridicat piesa de pe platformă în cele 5 secunde, nu o mai vindem automat!
+	if not loot_node in loot_on_platform:
+		return
+
 	var price = loot_node.price
 	var rarity = loot_node.rarity
 
 	# Eliminăm obiectul din listă
-	if loot_node in loot_on_platform:
-		loot_on_platform.erase(loot_node)
+	loot_on_platform.erase(loot_node)
 
 	# Adăugăm banii la NetworkManager.team_credits pe server
 	NetworkManager.add_credits(price)
@@ -174,8 +177,6 @@ func _trigger_escape() -> void:
 	for p in players_on_platform:
 		if "player_id" in p:
 			survivors_ids.append(p.player_id)
-			# Salvăm inventarul personal al supraviețuitorului
-			NetworkManager.save_player_inventory(p.player_id, p.inventory)
 
 	# Identificăm loot-ul fizic aflat pe platformă
 	for l in loot_on_platform:
@@ -186,13 +187,13 @@ func _trigger_escape() -> void:
 				"color": l.item_color
 			})
 
-	# Toți ceilalți jucători activi care NU erau pe platformă sunt lăsați în urmă (mor)
+	# Toți jucătorii își pierd inventarele și încep de la zero (obligatoriu fără iteme în inventar/mână în lobby)
 	var active_players = get_tree().get_nodes_in_group("players")
 	for p in active_players:
-		if not p in players_on_platform:
-			# Jucătorul este lăsat în urmă -> îi ștergem inventarul salvat/activ
+		if p.has_method("rpc"):
+			p.rpc("clear_inventory")
+		if "player_id" in p:
 			NetworkManager.save_player_inventory(p.player_id, [null, null, null, null])
-			print("Player ", p.name, " a fost lăsat în urmă și a murit!")
 
 	# Salvăm datele hărții în NetworkManager
 	NetworkManager.save_escaped_session(survivors_ids, survived_loot_data)
