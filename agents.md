@@ -436,6 +436,16 @@ Proiectul are acum un Game Loop complet și robust la nivel de MVP (Minimum Viab
 
 ---
 
+### SESIUNEA 5: Ajustări Post-Processing și Rafinarea Dithering-ului (În desfășurare)
+
+#### A. Unde suntem acum (Project State)
+* **Post-Processing Optimizat:** Am ajustat comportamentul vizual al camerei retro pentru a oferi o estetică echilibrată și plăcută ochiului.
+  * `stretch_shrink` a fost redus de la `3` la `2` în `explorer_player.tscn` pentru a face pixelarea mai fină (o rezoluție retro mai înaltă, de tip 540p la upscaling în 1080p).
+  * `dither_opacity` a fost redus la jumătate (la `0.4` în loc de `0.8`) atât în parametrii scenei `explorer_player.tscn` cât și ca valoare implicită în fișierul shader `assets/shaders/retro_post_process.gdshader`. Acest lucru îndulcește modelul geometric Bayer 4x4 și face ca grain-ul să fie mult mai subtil și organic, integrându-se perfect cu întunericul.
+* **Stare Curentă / Status:** Sesiunea și ajustările de post-processing **nu sunt complet finalizate**. Pentru a atinge look-ul vizual perfect, urmează să lucrăm și să integrăm asset-uri low-poly/retro dedicate (Etapa 2) pentru a vedea exact cum se așază și cum se potrivesc aceste shadere și efecte pe geometrii și texturi hand-painted ruginite.
+
+---
+
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
 
 Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.
