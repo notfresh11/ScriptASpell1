@@ -2,9 +2,9 @@ shader_type canvas_item;
 
 // Parametri expuși în Inspector - foarte ușor de modificat de utilizator!
 group_uniforms RetroParams;
-uniform float dither_opacity : hint_range(0.0, 1.0) = 0.4;
-uniform float dither_scale : hint_range(1.0, 8.0) = 3.0;
-uniform float color_depth : hint_range(2.0, 32.0) = 8.0;
+uniform float dither_opacity : hint_range(0.0, 1.0) = 0.05;
+uniform float dither_scale : hint_range(1.0, 8.0) = 1.0;
+uniform float color_depth : hint_range(2.0, 32.0) = 32.0;
 
 group_uniforms CRTParams;
 uniform float scanline_opacity : hint_range(0.0, 1.0) = 0.15;
