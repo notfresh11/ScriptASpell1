@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://bqflntcpnvg8"]
+[gd_scene load_steps=3 format=3 uid="uid://bqflntcpnvg8"]
+
+[ext_resource type="Script" path="res://scripts/dungeon/dungeon_torch.gd" id="1_dungeon_torch"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
 albedo_color = Color(0.1, 0.3, 0.5, 1)
@@ -30,3 +32,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.119628906, 0)
 use_collision = true
 size = Vector3(0.2, 0.23925781, 10)
 material = SubResource("StandardMaterial3D_wall")
+
+[node name="DungeonTorch" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+light_color = Color(1, 0.55, 0.2, 1)
+light_energy = 1.2
+omni_range = 8.0
+script = ExtResource("1_dungeon_torch")

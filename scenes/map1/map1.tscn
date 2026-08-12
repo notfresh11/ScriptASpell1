@@ -34,8 +34,16 @@ sky_material = SubResource("ProceduralSkyMaterial_sky")
 background_mode = 2
 sky = SubResource("Sky_env")
 ambient_light_source = 3
+ambient_light_color = Color(0.01, 0.01, 0.02, 1)
+ambient_light_energy = 0.02
 reflected_light_source = 2
 tonemap_mode = 2
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 1.8
+glow_strength = 1.0
+glow_bloom = 0.25
+glow_hdr_threshold = 1.0
 
 [node name="Map1" type="Node3D"]
 script = ExtResource("1_map_script")

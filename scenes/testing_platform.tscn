@@ -25,8 +25,16 @@ sky_material = SubResource("ProceduralSkyMaterial_sky")
 background_mode = 2
 sky = SubResource("Sky_env")
 ambient_light_source = 3
+ambient_light_color = Color(0.01, 0.01, 0.02, 1)
+ambient_light_energy = 0.02
 reflected_light_source = 2
 tonemap_mode = 2
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 1.8
+glow_strength = 1.0
+glow_bloom = 0.25
+glow_hdr_threshold = 1.0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_red_platform"]
 size = Vector3(4, 0.2, 4)
@@ -47,6 +55,8 @@ environment = SubResource("Environment_world")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 15, 0)
+light_color = Color(0.7, 0.8, 1, 1)
+light_energy = 0.2
 shadow_enabled = true
 
 [node name="Floor" type="StaticBody3D" parent="."]

@@ -33,6 +33,20 @@ func _enter_tree() -> void:
 @onready var raycast: RayCast3D = $Camera3D/RayCast3D
 @onready var hand_container: Node3D = $Camera3D/HandContainer
 
+# Camerele de post-procesare pentru dual viewport
+@onready var retro_camera: Camera3D = $RetroScreen/SubViewportContainer/SubViewport/Camera3D_Retro
+@onready var neon_camera: Camera3D = $NeonScreen/SubViewportContainer/SubViewport/Camera3D_Neon
+@onready var torch_light: SpotLight3D = $Camera3D/TorchLight
+
+@export_group("Torch Light Settings")
+@export var torch_enabled_by_default: bool = true
+@export var torch_base_energy: float = 1.2
+@export var torch_flicker_speed: float = 8.0
+@export var torch_flicker_strength: float = 0.25
+@export var torch_color: Color = Color(1, 0.65, 0.3, 1)
+
+var torch_time: float = 0.0
+
 # UI References
 @onready var hud: CanvasLayer = $HUD
 @onready var pickup_prompt: Label = $HUD/PickupPrompt
@@ -64,8 +78,13 @@ func _ready() -> void:
 
 	if is_multiplayer_authority():
 		_setup_local_player()
+		if torch_light:
+			torch_light.visible = torch_enabled_by_default
+			torch_light.light_color = torch_color
 	else:
 		camera.current = false
+		if has_node("RetroScreen"): $RetroScreen.queue_free()
+		if has_node("NeonScreen"): $NeonScreen.queue_free()
 		# Ascundem HUD-ul de pe clienții străini ca să nu se suprapună pe ecranul nostru
 		if hud:
 			hud.visible = false
@@ -116,6 +135,7 @@ func _setup_hand_visuals() -> void:
 	l_mesh.size = Vector3(0.15, 0.15, 0.15)
 	local_hand_item.mesh = l_mesh
 	local_hand_item.visible = false
+	local_hand_item.layers = 2 # Setează doar pe Layer 2 (Neon / High-Res)
 	if hand_container:
 		hand_container.add_child(local_hand_item)
 
@@ -132,7 +152,8 @@ func _setup_input_actions() -> void:
 		"hotkey_3": [KEY_3],
 		"hotkey_4": [KEY_4],
 		"pickup": [KEY_E],
-		"drop": [KEY_Q]
+		"drop": [KEY_Q],
+		"toggle_flashlight": [KEY_F]
 	}
 
 	for action in actions:
@@ -151,6 +172,8 @@ func _setup_local_player() -> void:
 		mesh_instance.visible = false
 	if hud:
 		hud.visible = true
+	if has_node("RetroScreen"): $RetroScreen.visible = true
+	if has_node("NeonScreen"): $NeonScreen.visible = true
 
 func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
@@ -180,6 +203,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("drop"):
 		_try_drop()
 
+	# Toggle Torch (Taste F)
+	if event.is_action_pressed("toggle_flashlight"):
+		if torch_light:
+			torch_light.visible = not torch_light.visible
+
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
@@ -208,6 +236,12 @@ func _physics_process(delta: float) -> void:
 func _process(_delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
+
+	# Efectul de pâlpâire pentru torța medievală cu ulei
+	if is_instance_valid(torch_light) and torch_light.visible:
+		torch_time += _delta * torch_flicker_speed
+		var flicker = sin(torch_time) * cos(torch_time * 0.7) * 0.5 + sin(torch_time * 1.5) * 0.3
+		torch_light.light_energy = torch_base_energy + (flicker * torch_flicker_strength)
 
 	# Scanăm cu RayCast-ul în fiecare cadru pentru prompt-ul de pick up
 	_process_raycast()
