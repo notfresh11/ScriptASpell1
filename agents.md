@@ -483,11 +483,15 @@ Această secțiune definește mecanica centrală și unică de transport și val
 Pentru a asigura o dezvoltare fluidă, eficientă și extrem de motivantă (fără a ne bloca în detalii prea devreme), am stabilit de comun acord următorul Roadmap în etape clare. Prioritatea este de a avea un joc funcțional de tip **Lethal Company/Pilgrim** la nivel de bază, transformându-l iterativ într-un produs unic de succes pentru Steam Wishlists.
 
 ### ETAPA 1: LUMINĂ ȘI ATMOSFERĂ (Următorul pas)
-*   **Scop:** Schimbarea atmosferei jocului de la un prototip steril de "Tetris" la un veritabil survival horror medieval-cyberpunk.
+*   **Scop:** Schimbarea atmosferei jocului de la un prototip steril de "Tetris" la un veritabil survival horror medieval-cyberpunk, adoptând o estetică extrem de retro, texturată și degradată (Varianta A).
 *   **Livrabile:**
     *   Sistem de iluminare dramatic în Dungeon (întuneric profund, lumini Omni de tip torțe de perete slabe, ceață volumetrică low-poly).
-    *   Sistem de lanterne sau torțe pe ulei pentru exploratori (consumabile sau programabile).
-    *   Shader retro de pixelare / dithered (vibe PSX/Pilgrim de rezoluție redusă) aplicat pe camera jucătorilor pentru a oferi un stil artistic instantaneu captivant.
+    *   Sursa de lumină personală a jucătorului: o lanternă sau o torță medievală cu ulei, generând o lumină caldă, pâlpâitoare (portocaliu/galben) care creează umbre lungi, dinamice și amplifică paranoia vizuală.
+    *   **Pachetul de Shadere Retro (Varianta A - Extrem/Degradat):**
+        *   *Rezoluție Internă Scăzută:* Randarea întregii scene 3D la o rezoluție nativă foarte mică (ex. 320x240 sau 640x480) și upscalarea ei cu filtrare Nearest Neighbor pentru a obține pixeli mari, fizici.
+        *   *Dither Shader:* Un filtru care limitează numărul de culori pe ecran și folosește un model de dithering (bayer matrix) pentru a reda gradienții de piatră și întuneric, oferind pereților acel aspect brut, ruginit, umezit și zgrunțuros de pe consolele pe 32 de biți (PS1/Sega Saturn).
+        *   *Aberație Cromatică & Scanlines:* O ușoară descompunere a culorilor spre marginile ecranului și linii CRT fine pentru a simula o mască de vizor metalic ieftin sau o cameră bodycam degradată.
+        *   *Contrast Neon Magic (Efectul Bloom):* Toate elementele legate de cod sau magie (interfețe tablete, lasere de scanare, glitch-uri de eroare) vor sparge această degradare retro. Ele vor fi randate excepțional de clare și luminoase, folosind un efect de **Bloom/Glow** puternic, contrastând violent rozul/verdele neon cu piatra rece și întunericul din jur.
 
 ### ETAPA 2: INTEGRĂRI ASSET-URI EXTERNE (Să arate profi pentru Steam)
 *   **Scop:** Înlocuirea completă a capsulelor de jucători și a blocurilor de testare 3D cu modele low-poly atractive, fără a pierde timp cu modelarea manuală de la zero.
