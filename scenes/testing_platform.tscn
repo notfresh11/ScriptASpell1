@@ -1,17 +1,7 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3 uid="uid://vda7sb6ddlwn"]
 
-[ext_resource type="Script" path="res://scripts/ui/testing_platform.gd" id="1_testing_platform"]
+[ext_resource type="Script" uid="uid://roth4xkojat2" path="res://scripts/ui/testing_platform.gd" id="1_testing_platform"]
 [ext_resource type="PackedScene" uid="uid://be8sc007v3m8j" path="res://scenes/interactables/green_platform.tscn" id="2_green_platform"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
-size = Vector3(40, 1, 40)
-
-[sub_resource type="BoxMesh" id="BoxMesh_floor"]
-size = Vector3(40, 1, 40)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor_mat"]
-albedo_color = Color(0.12, 0.12, 0.14, 1)
-roughness = 0.8
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.05, 0.05, 0.08, 1)
@@ -32,9 +22,17 @@ tonemap_mode = 2
 glow_enabled = true
 glow_normalized = true
 glow_intensity = 1.8
-glow_strength = 1.0
 glow_bloom = 0.25
-glow_hdr_threshold = 1.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(40, 1, 40)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(40, 1, 40)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor_mat"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+roughness = 0.8
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_red_platform"]
 size = Vector3(4, 0.2, 4)
@@ -47,72 +45,72 @@ albedo_color = Color(1, 0.1, 0.1, 1)
 emission_enabled = true
 emission = Color(0.4, 0, 0, 1)
 
-[node name="TestingPlatform" type="Node3D"]
+[node name="TestingPlatform" type="Node3D" unique_id=390303083]
 script = ExtResource("1_testing_platform")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2020685860]
 environment = SubResource("Environment_world")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=786578075]
 transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 15, 0)
 light_color = Color(0.7, 0.8, 1, 1)
 light_energy = 0.2
 shadow_enabled = true
 
-[node name="Floor" type="StaticBody3D" parent="."]
+[node name="Floor" type="StaticBody3D" parent="." unique_id=14308405]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=1979283648]
 shape = SubResource("BoxShape3D_floor")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor" unique_id=1663570301]
 mesh = SubResource("BoxMesh_floor")
 surface_material_override/0 = SubResource("StandardMaterial3D_floor_mat")
 
-[node name="RedPlatform" type="Area3D" parent="."]
+[node name="RedPlatform" type="Area3D" parent="." unique_id=1053140382]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 8)
 collision_mask = 2
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RedPlatform"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RedPlatform" unique_id=17282672]
 shape = SubResource("BoxShape3D_red_platform")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="RedPlatform"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RedPlatform" unique_id=271824251]
 mesh = SubResource("BoxMesh_red_platform")
 surface_material_override/0 = SubResource("StandardMaterial3D_red_mat")
 
-[node name="GreenPlatform" parent="." instance=ExtResource("2_green_platform")]
+[node name="GreenPlatform" parent="." unique_id=1533563423 instance=ExtResource("2_green_platform")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
 is_lobby_platform = true
 
-[node name="SpawnPoints" type="Node3D" parent="."]
+[node name="SpawnPoints" type="Node3D" parent="." unique_id=746082316]
 
-[node name="Point1" type="Marker3D" parent="SpawnPoints"]
+[node name="Point1" type="Marker3D" parent="SpawnPoints" unique_id=313917866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, -5)
 
-[node name="Point2" type="Marker3D" parent="SpawnPoints"]
+[node name="Point2" type="Marker3D" parent="SpawnPoints" unique_id=655280128]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -5)
 
-[node name="Point3" type="Marker3D" parent="SpawnPoints"]
+[node name="Point3" type="Marker3D" parent="SpawnPoints" unique_id=102778150]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, 5)
 
-[node name="Point4" type="Marker3D" parent="SpawnPoints"]
+[node name="Point4" type="Marker3D" parent="SpawnPoints" unique_id=55711620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 5)
 
-[node name="Players" type="Node3D" parent="."]
+[node name="Players" type="Node3D" parent="." unique_id=749664361]
 
-[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/player/explorer_player.tscn")
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=362583003]
+_spawnable_scenes = PackedStringArray("uid://cloypl2l7177q")
 spawn_path = NodePath("../Players")
 
-[node name="Loot" type="Node3D" parent="."]
+[node name="Loot" type="Node3D" parent="." unique_id=1807768157]
 
-[node name="LootSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/interactables/loot_item.tscn")
+[node name="LootSpawner" type="MultiplayerSpawner" parent="." unique_id=869518361]
+_spawnable_scenes = PackedStringArray("uid://dp1y5s2r36k2x")
 spawn_path = NodePath("../Loot")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1318131088]
 
-[node name="LobbyTrackerContainer" type="MarginContainer" parent="CanvasLayer"]
+[node name="LobbyTrackerContainer" type="MarginContainer" parent="CanvasLayer" unique_id=2006385661]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -122,24 +120,24 @@ offset_bottom = 80.0
 grow_horizontal = 2
 theme_override_constants/margin_top = 20
 
-[node name="Panel" type="PanelContainer" parent="CanvasLayer/LobbyTrackerContainer"]
+[node name="Panel" type="PanelContainer" parent="CanvasLayer/LobbyTrackerContainer" unique_id=1861295569]
 layout_mode = 2
 
-[node name="Margin" type="MarginContainer" parent="CanvasLayer/LobbyTrackerContainer/Panel"]
+[node name="Margin" type="MarginContainer" parent="CanvasLayer/LobbyTrackerContainer/Panel" unique_id=1488750947]
 layout_mode = 2
 theme_override_constants/margin_left = 15
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 15
 theme_override_constants/margin_bottom = 10
 
-[node name="ExpeditionLabel" type="Label" parent="CanvasLayer/LobbyTrackerContainer/Panel/Margin"]
+[node name="ExpeditionLabel" type="Label" parent="CanvasLayer/LobbyTrackerContainer/Panel/Margin" unique_id=1327068722]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
 theme_override_font_sizes/font_size = 18
 text = "Step on the Red Platform to start Expedition (0/1 players ready)"
 horizontal_alignment = 1
 
-[node name="Control" type="Control" parent="CanvasLayer"]
+[node name="Control" type="Control" parent="CanvasLayer" unique_id=2081648431]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -148,7 +146,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="CanvasLayer/Control"]
+[node name="Panel" type="Panel" parent="CanvasLayer/Control" unique_id=1730738188]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -156,7 +154,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control"]
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control" unique_id=1588639967]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -164,17 +162,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer"]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer" unique_id=816174045]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox"]
+[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox" unique_id=1509570128]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Testing Platform Menu"
 horizontal_alignment = 1
 
-[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox"]
+[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox" unique_id=612011719]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
