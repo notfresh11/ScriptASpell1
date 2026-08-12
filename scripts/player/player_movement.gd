@@ -58,12 +58,6 @@ var local_hand_item: MeshInstance3D = null
 
 func _ready() -> void:
 	add_to_group("players")
-
-	# Restore inventory from saved state if any
-	if player_id in NetworkManager.saved_inventories:
-		inventory = NetworkManager.get_saved_inventory(player_id)
-		_update_active_hand_color()
-
 	_init_styles()
 	_setup_input_actions()
 	_setup_hand_visuals()
@@ -340,6 +334,15 @@ func add_to_inventory(p_rarity: String, p_price: int, p_color: Color) -> void:
 		}
 		_update_hud()
 		_update_active_hand_color()
+
+@rpc("call_local", "reliable")
+func clear_inventory() -> void:
+	for i in range(4):
+		inventory[i] = null
+	active_slot_index = 0
+	active_item_color = Color(0, 0, 0, 0)
+	_update_hud()
+	_update_hand_visual_for_all()
 
 @rpc("any_peer", "call_local")
 func request_drop(p_rarity: String, p_price: int, p_color: Color, spawn_pos: Vector3, throw_vel: Vector3) -> void:

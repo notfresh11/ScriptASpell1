@@ -14,7 +14,7 @@ emission_enabled = true
 emission = Color(0, 0.3, 0.05, 1)
 
 [node name="GreenPlatform" type="Area3D"]
-collision_mask = 3
+collision_mask = 7
 script = ExtResource("1_green_script")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
