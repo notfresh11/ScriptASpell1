@@ -475,3 +475,51 @@ Această secțiune definește mecanica centrală și unică de transport și val
     *   Valoarea în bani a itemelor scade cu 1% pe secundă. Operatorul poate rula un protocol de deparazitare sau curățare de pe terminal (`git clean` sau `antivirus_scan`) pentru a opri degradarea.
 2.  **Blocul de Scriptare Unic (The Auto-Transfer Block):**
     *   Un bloc Scratch special ce poate fi cumpărat din magazin, numit `PushBlock()` sau `TransmitSpell()`. Jucătorii își pot programa tableta sau armele să uploadeze automat buffer-ul de date în buncăr în anumite condiții (ex: `if (speed == 0) -> PushBlock()`), cu un consum suplimentar de Mana-Credits.
+
+---
+
+## 13. ROADMAP OFICIAL DE DEZVOLTARE (DIRECȚIA MVP SPRE STEAM ALPHA)
+
+Pentru a asigura o dezvoltare fluidă, eficientă și extrem de motivantă (fără a ne bloca în detalii prea devreme), am stabilit de comun acord următorul Roadmap în etape clare. Prioritatea este de a avea un joc funcțional de tip **Lethal Company/Pilgrim** la nivel de bază, transformându-l iterativ într-un produs unic de succes pentru Steam Wishlists.
+
+### ETAPA 1: LUMINĂ ȘI ATMOSFERĂ (Următorul pas)
+*   **Scop:** Schimbarea atmosferei jocului de la un prototip steril de "Tetris" la un veritabil survival horror medieval-cyberpunk.
+*   **Livrabile:**
+    *   Sistem de iluminare dramatic în Dungeon (întuneric profund, lumini Omni de tip torțe de perete slabe, ceață volumetrică low-poly).
+    *   Sistem de lanterne sau torțe pe ulei pentru exploratori (consumabile sau programabile).
+    *   Shader retro de pixelare / dithered (vibe PSX/Pilgrim de rezoluție redusă) aplicat pe camera jucătorilor pentru a oferi un stil artistic instantaneu captivant.
+
+### ETAPA 2: INTEGRĂRI ASSET-URI EXTERNE (Să arate profi pentru Steam)
+*   **Scop:** Înlocuirea completă a capsulelor de jucători și a blocurilor de testare 3D cu modele low-poly atractive, fără a pierde timp cu modelarea manuală de la zero.
+*   **Livrabile:**
+    *   Descărcarea și integrarea de modele 3D gratuite/publice (CC0/low-poly) de pe internet pentru inamici, jucători și obiecte de loot (ex. cupe de aur, săbii ruginite, tablete, baze metalice).
+    *   Decorarea pieselor de dungeon 10x10 cu texturi retro ruginite, stâlpi de piatră și detalii de buncăr medieval.
+
+### ETAPA 3: PROGRAMARE ȘI HOTFIX-URI (Sistem de bază Lethal Company)
+*   **Scop:** Stabilizarea codului existent și adăugarea primilor inamici/pericole pentru a face jocul cu adevărat distractiv în sesiunile de playtest.
+*   **Livrabile:**
+    *   Remedierea eventualelor bug-uri, optimizări de sincronizare multiplayer și fluidizarea controalelor actuale.
+    *   Implementarea primului monstru de bază care patrulează prin Dungeon și fugărește exploratorii (pentru MVP, acesta va fi reprezentat simplu printr-un Sprite 2D tip "clasicul PNG Godot" în spațiu 3D care se mișcă spre jucători și le dă damage).
+    *   Sistem de spawnare de inamici pe server sincronizat pe clienți.
+
+### ETAPA 4: POLISH — FAZA 1 (Finisare elemente de bază)
+*   **Scop:** Oferirea unui feedback senzorial satisfăcător pentru acțiunile de bază ale jucătorilor.
+*   **Livrabile:**
+    *   Sunete retro (pași în ecou pe piatră, sunet de pickup/drop loot, alarme de countdown).
+    *   Îmbunătățirea interfeței (HUD) cu efecte de tip glitch neon și indicatori mai clari pentru starea coechipierilor și a inventarului.
+    *   Sesiuni de playtest co-op pe rețea locală / online pentru identificarea problemelor de gameplay.
+
+### ETAPA 5: PROGRAMARE LUCRURI UNICE (Identity & Innovation)
+*   **Scop:** Introducerea mecanicilor unice descrise în GDD care fac acest joc diferit de orice alt clona de Lethal Company.
+*   **Livrabile:**
+    *   **Digitizarea Loot-ului:** Scanarea obiectelor în tablete, gestionarea spațiului de Buffer (MB) și limitarea capacității locale de stocare.
+    *   **Terminalul Operatorului & Git Pull:** Adăugarea terminalului interactiv din buncăr unde Operatorul scrie comenzi reale (`git pull`, `git clean`) pentru a descărca datele exploratorilor și a le transforma în bani.
+    *   **Hard Disk Drop (HDD):** Drop-ul fizic al unui HDD masiv la locul morții jucătorului pentru a recupera manual datele nescărcate.
+    *   **Chaos Engine:** Trigger-ul de glitch-uri comice (Chicken Party, Backrooms, inversare taste, etc.) atunci când codul sau conexiunile se corup.
+
+### ETAPA 6: POLISH FINAL SPRE STEAM WISHLISTS
+*   **Scop:** Împachetarea jocului într-un build perfect stabil și optimizat pentru publicare și promovare.
+*   **Livrabile:**
+    *   Sistem de Quota progresiv (Zile/Cote de îndeplinit) și scenariul de eșec (Soul Defrag / Recycle Bin reset).
+    *   Polishing pe partea de rețea, eliminarea oricăror erori din logs.
+    *   Crearea materialelor vizuale (capturi de ecran atrăgătoare, gameplay capturat în 4 jucători) pentru lansarea paginii de Steam și începerea campaniei de Wishlist.
