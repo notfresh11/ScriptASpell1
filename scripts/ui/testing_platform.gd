@@ -2,11 +2,13 @@
 extends Node3D
 
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
+const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.tscn")
 
 @onready var spawn_points: Node3D = $SpawnPoints
 @onready var players_node: Node3D = $Players
 @onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 @onready var red_platform: Area3D = $RedPlatform
+@onready var green_platform: Area3D = $GreenPlatform
 @onready var expedition_label: Label = $CanvasLayer/LobbyTrackerContainer/Panel/Margin/ExpeditionLabel
 
 # Set de jucători prezenți pe platforma roșie (ID-uri)
@@ -28,6 +30,27 @@ func _ready() -> void:
 		# Spawnăm jucătorii care sunt deja conectați
 		for player_id in NetworkManager.players:
 			spawn_player(player_id)
+
+		# Dacă avem loot salvat/evadat, îl spawnăm pe platforma verde din Lobby
+		if green_platform and not NetworkManager.saved_escaped_loot.is_empty():
+			print("Spawnăm loot-ul salvat pe platforma verde din lobby...")
+			var loot_node = get_node_or_null("Loot")
+			for item_data in NetworkManager.saved_escaped_loot:
+				var loot_instance = LOOT_SCENE.instantiate()
+				# Adăugăm elementul în containerul Loot pentru replicare pe clienți
+				if loot_node:
+					loot_node.add_child(loot_instance, true)
+				else:
+					add_child(loot_instance, true)
+				# Poziționăm deasupra platformei verzi
+				var spawn_pos = green_platform.global_position + Vector3(randf_range(-1.5, 1.5), 0.5, randf_range(-1.5, 1.5))
+				loot_instance.global_position = spawn_pos
+
+				var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
+				loot_instance.init_loot(unique_id, item_data["rarity"], item_data["price"], item_data["color"])
+
+			# După spawnarea completă, curățăm bufferul din NetworkManager
+			NetworkManager.saved_escaped_loot.clear()
 
 		# Actualizăm statusul inițial
 		update_tracker_ui()
