@@ -1,7 +1,7 @@
-[gd_scene load_steps=14 format=3 uid="uid://cloypl2l7177q"]
+[gd_scene format=3 uid="uid://cloypl2l7177q"]
 
-[ext_resource type="Script" path="res://scripts/player/player_movement.gd" id="1_player_movement"]
-[ext_resource type="Shader" path="res://assets/shaders/retro_post_process.gdshader" id="2_retro_shader"]
+[ext_resource type="Script" uid="uid://bes1pr71f5gux" path="res://scripts/player/player_movement.gd" id="1_player_movement"]
+[ext_resource type="Shader" uid="uid://dc2iniuqvor42" path="res://assets/shaders/retro_post_process.gdshader" id="2_retro_shader"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_shape"]
 radius = 0.4
@@ -21,7 +21,6 @@ size = Vector3(0.5, 0.2, 0.3)
 albedo_color = Color(0, 1, 0.8, 1)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_retro"]
-render_priority = 0
 shader = ExtResource("2_retro_shader")
 shader_parameter/dither_opacity = 0.8
 shader_parameter/dither_scale = 3.0
@@ -73,38 +72,38 @@ properties/6/path = NodePath("Camera3D/TorchLight:visible")
 properties/6/spawn = true
 properties/6/replication_mode = 1
 
-[node name="ExplorerPlayer" type="CharacterBody3D"]
+[node name="ExplorerPlayer" type="CharacterBody3D" unique_id=140251625]
 collision_layer = 2
 script = ExtResource("1_player_movement")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=799738115]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_shape")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=539940417]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_mesh")
 skeleton = NodePath("../CollisionShape3D")
 surface_material_override/0 = SubResource("StandardMaterial3D_skin")
 
-[node name="VisorMesh" type="MeshInstance3D" parent="MeshInstance3D"]
+[node name="VisorMesh" type="MeshInstance3D" parent="MeshInstance3D" unique_id=1100080643]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -0.3)
 mesh = SubResource("BoxMesh_visor")
 surface_material_override/0 = SubResource("StandardMaterial3D_visor")
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=295424334]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.3)
 cull_mask = 0
 
-[node name="RayCast3D" type="RayCast3D" parent="Camera3D"]
+[node name="RayCast3D" type="RayCast3D" parent="Camera3D" unique_id=228228266]
 target_position = Vector3(0, 0, -3.5)
 collision_mask = 4
 collide_with_areas = true
 
-[node name="HandContainer" type="Node3D" parent="Camera3D"]
+[node name="HandContainer" type="Node3D" parent="Camera3D" unique_id=459703893]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.3, -0.6)
 
-[node name="TorchLight" type="SpotLight3D" parent="Camera3D"]
+[node name="TorchLight" type="SpotLight3D" parent="Camera3D" unique_id=590361365]
 light_color = Color(1, 0.65, 0.3, 1)
 light_energy = 1.2
 light_volumetric_fog_energy = 1.5
@@ -113,15 +112,15 @@ shadow_enabled = true
 spot_range = 15.0
 spot_angle = 50.0
 
-[node name="RemoteRetro" type="RemoteTransform3D" parent="Camera3D"]
+[node name="RemoteRetro" type="RemoteTransform3D" parent="Camera3D" unique_id=1059018255]
 remote_path = NodePath("../../RetroScreen/SubViewportContainer/SubViewport/Camera3D_Retro")
 
-[node name="RemoteNeon" type="RemoteTransform3D" parent="Camera3D"]
+[node name="RemoteNeon" type="RemoteTransform3D" parent="Camera3D" unique_id=687208402]
 remote_path = NodePath("../../NeonScreen/SubViewportContainer/SubViewport/Camera3D_Neon")
 
-[node name="RetroScreen" type="CanvasLayer" parent="."]
+[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=1943013108]
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="RetroScreen"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="RetroScreen" unique_id=1267306675]
 texture_filter = 1
 material = SubResource("ShaderMaterial_retro")
 anchors_preset = 15
@@ -130,22 +129,21 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 stretch = true
-stretch_shrink = 3
+stretch_shrink = 2
 
-[node name="SubViewport" type="SubViewport" parent="RetroScreen/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="RetroScreen/SubViewportContainer" unique_id=1911725842]
 handle_input_locally = false
-use_own_world_3d = false
-size = Vector2i(640, 360)
+size = Vector2i(960, 540)
 render_target_update_mode = 4
 
-[node name="Camera3D_Retro" type="Camera3D" parent="RetroScreen/SubViewportContainer/SubViewport"]
+[node name="Camera3D_Retro" type="Camera3D" parent="RetroScreen/SubViewportContainer/SubViewport" unique_id=1837627255]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.3)
 cull_mask = 1
 
-[node name="NeonScreen" type="CanvasLayer" parent="."]
+[node name="NeonScreen" type="CanvasLayer" parent="." unique_id=1376273468]
 layer = 2
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="NeonScreen"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="NeonScreen" unique_id=1461005501]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -153,21 +151,20 @@ grow_horizontal = 2
 grow_vertical = 2
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="NeonScreen/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="NeonScreen/SubViewportContainer" unique_id=1500599953]
 transparent_bg = true
 handle_input_locally = false
-use_own_world_3d = false
 size = Vector2i(1920, 1080)
 render_target_update_mode = 4
 
-[node name="Camera3D_Neon" type="Camera3D" parent="NeonScreen/SubViewportContainer/SubViewport"]
+[node name="Camera3D_Neon" type="Camera3D" parent="NeonScreen/SubViewportContainer/SubViewport" unique_id=402208824]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.3)
 cull_mask = 2
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=228235122]
 layer = 3
 
-[node name="Crosshair" type="CenterContainer" parent="HUD"]
+[node name="Crosshair" type="CenterContainer" parent="HUD" unique_id=608746345]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -177,13 +174,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Dot" type="Panel" parent="HUD/Crosshair"]
+[node name="Dot" type="Panel" parent="HUD/Crosshair" unique_id=666357467]
 custom_minimum_size = Vector2(6, 6)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_crosshair")
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_crosshair")
 
-[node name="Hotbar" type="HBoxContainer" parent="HUD"]
+[node name="Hotbar" type="HBoxContainer" parent="HUD" unique_id=431213173]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -195,17 +192,17 @@ offset_right = 170.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 theme_override_constants/separation = 10
 alignment = 1
-mouse_filter = 2
 
-[node name="Slot1" type="Panel" parent="HUD/Hotbar"]
+[node name="Slot1" type="Panel" parent="HUD/Hotbar" unique_id=1872533241]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 
-[node name="Label" type="Label" parent="HUD/Hotbar/Slot1"]
+[node name="Label" type="Label" parent="HUD/Hotbar/Slot1" unique_id=1069727807]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -217,15 +214,14 @@ text = "Empty"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="Slot2" type="Panel" parent="HUD/Hotbar"]
+[node name="Slot2" type="Panel" parent="HUD/Hotbar" unique_id=1422931389]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 
-[node name="Label" type="Label" parent="HUD/Hotbar/Slot2"]
+[node name="Label" type="Label" parent="HUD/Hotbar/Slot2" unique_id=336464683]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -237,15 +233,14 @@ text = "Empty"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="Slot3" type="Panel" parent="HUD/Hotbar"]
+[node name="Slot3" type="Panel" parent="HUD/Hotbar" unique_id=228562848]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 
-[node name="Label" type="Label" parent="HUD/Hotbar/Slot3"]
+[node name="Label" type="Label" parent="HUD/Hotbar/Slot3" unique_id=945877623]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -257,15 +252,14 @@ text = "Empty"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="Slot4" type="Panel" parent="HUD/Hotbar"]
+[node name="Slot4" type="Panel" parent="HUD/Hotbar" unique_id=84750598]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_normal")
 
-[node name="Label" type="Label" parent="HUD/Hotbar/Slot4"]
+[node name="Label" type="Label" parent="HUD/Hotbar/Slot4" unique_id=1349226742]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -277,9 +271,8 @@ text = "Empty"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="ActiveItemLabel" type="Label" parent="HUD"]
+[node name="ActiveItemLabel" type="Label" parent="HUD" unique_id=545187545]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -295,9 +288,8 @@ theme_override_font_sizes/font_size = 14
 text = "Active Item: None"
 horizontal_alignment = 1
 vertical_alignment = 1
-mouse_filter = 2
 
-[node name="PickupPrompt" type="Label" parent="HUD"]
+[node name="PickupPrompt" type="Label" parent="HUD" unique_id=1571470656]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -314,9 +306,8 @@ theme_override_font_sizes/font_size = 14
 text = "[E] Pick Up Item ($45)"
 horizontal_alignment = 1
 vertical_alignment = 1
-mouse_filter = 2
 
-[node name="EscapeLabel" type="Label" parent="HUD"]
+[node name="EscapeLabel" type="Label" parent="HUD" unique_id=794478908]
 visible = false
 anchors_preset = 5
 anchor_left = 0.5
@@ -330,10 +321,8 @@ theme_override_font_sizes/font_size = 28
 text = "EVACUARE ÎN: 15 s"
 horizontal_alignment = 1
 vertical_alignment = 1
-mouse_filter = 2
 
-[node name="CreditsLabel" type="Label" parent="HUD"]
-anchors_preset = 0
+[node name="CreditsLabel" type="Label" parent="HUD" unique_id=2040997927]
 offset_left = 30.0
 offset_top = 30.0
 offset_right = 300.0
@@ -341,7 +330,6 @@ offset_bottom = 70.0
 theme_override_font_sizes/font_size = 20
 text = "Credits: $0"
 vertical_alignment = 1
-mouse_filter = 2
 
-[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=571115066]
 replication_config = SubResource("SceneReplicationConfig_sync")
