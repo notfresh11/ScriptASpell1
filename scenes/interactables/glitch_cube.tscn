@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://dp1y5s2r36k2y"]
 
-[ext_resource type="Texture2D" uid="uid://bio7f33k2ly3v" path="res://icon.svg" id="1_godot_icon"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="1_godot_icon"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glitch"]
 albedo_texture = ExtResource("1_godot_icon")

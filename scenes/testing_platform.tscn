@@ -83,7 +83,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_red_mat")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
 is_lobby_platform = true
 
-[node name="BluePlatform" parent="." unique_id=2081541337" instance=ExtResource("3_blue_platform")]
+[node name="BluePlatform" parent="." unique_id="2081541337" instance=ExtResource("3_blue_platform")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 0)
 
 [node name="SpawnPoints" type="Node3D" parent="." unique_id=746082316]

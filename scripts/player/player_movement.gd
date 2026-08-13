@@ -316,21 +316,12 @@ func _physics_process(delta: float) -> void:
 	# --- INTERPRETER TICK ---
 	# Resetăm mișcarea dorită de la interpreter
 	var move_vector: Vector3 = Vector3.ZERO
-	var look_mouse_allowed: bool = false
-	var try_pickup_cmd: bool = false
-	var try_drop_cmd: bool = false
 
 	# Parametrii resetați înaintea interpretării
 	current_speed_multiplier = 1.0
 	gravity_multiplier = 1.0
-	var double_jump_allowed = false
 
 	# Rulăm interpreterul pentru fiecare secțiune activă
-	# Head (LOOK_MOUSE)
-	var head_res = _execute_interpreter_section("Head")
-	if "LOOK_MOUSE" in head_res:
-		look_mouse_allowed = true
-
 	# L Foot (Mers stânga/față)
 	var l_foot_res = _execute_interpreter_section("L Foot")
 	if "MOVE_FORWARD" in l_foot_res: move_vector += -transform.basis.z
@@ -344,14 +335,6 @@ func _physics_process(delta: float) -> void:
 	if "MOVE_RIGHT" in r_foot_res: move_vector += transform.basis.x
 	if "SPEED" in r_foot_res: current_speed_multiplier = r_foot_res["SPEED"]
 	if "BOUNCY" in r_foot_res: gravity_multiplier = 0.4
-
-	# L Hand
-	var l_hand_res = _execute_interpreter_section("L Hand")
-	if "PICKUP" in l_hand_res: try_pickup_cmd = true
-
-	# R Hand
-	var r_hand_res = _execute_interpreter_section("R Hand")
-	if "DROP" in r_hand_res: try_drop_cmd = true
 
 	# Body
 	var body_res = _execute_interpreter_section("Body")
@@ -559,7 +542,7 @@ func toggle_coding_menu() -> void:
 		coding_ui.visible = false
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-func _on_coding_tab_changed(tab: int) -> void:
+func _on_coding_tab_changed(_tab: int) -> void:
 	_refresh_active_section_editor()
 
 func _on_coding_reset_pressed() -> void:
