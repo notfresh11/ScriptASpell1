@@ -23,6 +23,11 @@ var saved_inventories: Dictionary = {} # player_id: Array of 4 items
 var saved_escaped_loot: Array = [] # list of dicts: rarity, price, color
 var survivor_player_ids: Array[int] = []
 
+# Persistență stări de Coding și deținere Blocuri
+var persistent_compiled_scripts: Dictionary = {}
+var persistent_pending_scripts: Dictionary = {}
+var persistent_owned_blocks: Array = []
+
 # Referință la peer-ul activ
 var peer: ENetMultiplayerPeer = null
 

@@ -7,12 +7,12 @@ extends Object
 static func get_available_blocks_definition() -> Dictionary:
 	return {
 		"IF": {
-			"name": "If Condition",
+			"name": "IF",
 			"cost": 10,
 			"desc": "Check a condition (Dropdown key). Ex: IF W_pressed",
 			"type": "control",
 			"has_dropdown": true,
-			"dropdown_options": ["W_pressed", "S_pressed", "A_pressed", "D_pressed", "E_pressed", "Q_pressed", "F_pressed", "Mouse_Moved", "Health_Low", "Always"]
+			"dropdown_options": ["W_pressed", "S_pressed", "A_pressed", "D_pressed", "E_just_pressed", "Q_just_pressed", "F_just_pressed", "Mouse_Moved", "Health_Low", "Always"]
 		},
 		"ELSE": {
 			"name": "Else",
@@ -106,6 +106,13 @@ static func get_available_blocks_definition() -> Dictionary:
 			"desc": "Low gravity high jumping",
 			"type": "action",
 			"has_dropdown": false
+		},
+		"LIGHT_TORCH": {
+			"name": "Light Torch",
+			"cost": 10,
+			"desc": "Turns on/off your Oil Torch",
+			"type": "action",
+			"has_dropdown": false
 		}
 	}
 
@@ -119,12 +126,12 @@ static func get_default_script(section: String) -> Array:
 			]
 		"L Hand":
 			return [
-				{"type": "IF", "param": "E_pressed"},
+				{"type": "IF", "param": "E_just_pressed"},
 				{"type": "PICKUP"}
 			]
 		"R Hand":
 			return [
-				{"type": "IF", "param": "Q_pressed"},
+				{"type": "IF", "param": "Q_just_pressed"},
 				{"type": "DROP"}
 			]
 		"L Foot":
