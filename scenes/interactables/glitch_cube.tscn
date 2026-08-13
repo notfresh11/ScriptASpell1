@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3 uid="uid://dp1y5s2r36k2y"]
+
+[ext_resource type="Texture2D" uid="uid://bio7f33k2ly3v" path="res://icon.svg" id="1_godot_icon"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glitch"]
+albedo_texture = ExtResource("1_godot_icon")
+roughness = 0.5
+emission_enabled = true
+emission = Color(0, 0.4, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_glitch"]
+material = SubResource("StandardMaterial3D_glitch")
+size = Vector3(1, 1, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_glitch"]
+size = Vector3(1, 1, 1)
+
+[node name="GlitchCube" type="StaticBody3D"]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_glitch")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_glitch")
+surface_material_override/0 = SubResource("StandardMaterial3D_glitch")
