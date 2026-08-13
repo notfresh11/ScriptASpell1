@@ -331,5 +331,199 @@ theme_override_font_sizes/font_size = 20
 text = "Credits: $0"
 vertical_alignment = 1
 
+[node name="CodingUI" type="Control" parent="HUD" unique_id=1915647222]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="HUD/CodingUI" unique_id=1554625232]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -350.0
+offset_right = 500.0
+offset_bottom = 350.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="HUD/CodingUI/Panel" unique_id=14115162]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 15.0
+offset_right = 300.0
+offset_bottom = 45.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0, 0.9, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+text = "RUNIC CODER [B] — CUSTOMIZE BODY PARTS"
+horizontal_alignment = 1
+
+[node name="HBox" type="HBoxContainer" parent="HUD/CodingUI/Panel" unique_id=1412532]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = -20.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="LeftBlocks" type="VBoxContainer" parent="HUD/CodingUI/Panel/HBox" unique_id=1412533]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="SectionTitle" type="Label" parent="HUD/CodingUI/Panel/HBox/LeftBlocks" unique_id=1412534]
+layout_mode = 2
+text = "Owned Coding Blocks (Shop Items):"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="HUD/CodingUI/Panel/HBox/LeftBlocks" unique_id=1412535]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBox" type="VBoxContainer" parent="HUD/CodingUI/Panel/HBox/LeftBlocks/Scroll" unique_id=1412536]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="RightEditor" type="VBoxContainer" parent="HUD/CodingUI/Panel/HBox" unique_id=1412537]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TabBar" type="TabBar" parent="HUD/CodingUI/Panel/HBox/RightEditor" unique_id=1412538]
+layout_mode = 2
+tab_count = 7
+tab_0/title = "Head"
+tab_1/title = "L Hand"
+tab_2/title = "R Hand"
+tab_3/title = "L Foot"
+tab_4/title = "R Foot"
+tab_5/title = "Body"
+tab_6/title = "Spell"
+
+[node name="Scroll" type="ScrollContainer" parent="HUD/CodingUI/Panel/HBox/RightEditor" unique_id=1412539]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ActiveScriptBlocks" type="VBoxContainer" parent="HUD/CodingUI/Panel/HBox/RightEditor/Scroll" unique_id=1412540]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="ActionButtons" type="HBoxContainer" parent="HUD/CodingUI/Panel" unique_id=1412752]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = -60.0
+offset_right = 250.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ResetDefaultBtn" type="Button" parent="HUD/CodingUI/Panel/ActionButtons" unique_id=1412753]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "Reset Default"
+
+[node name="SaveBtn" type="Button" parent="HUD/CodingUI/Panel/ActionButtons" unique_id=1412754]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "Save & Execute (Round Start)"
+
+[node name="CloseBtn" type="Button" parent="HUD/CodingUI/Panel/ActionButtons" unique_id=1412755]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Close [B]"
+
+[node name="ShopUI" type="Control" parent="HUD" unique_id=191564722]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="HUD/ShopUI" unique_id=155462523]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -250.0
+offset_right = 300.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="HUD/ShopUI/Panel" unique_id=1411516]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 15.0
+offset_right = 200.0
+offset_bottom = 45.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0, 0.6, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "BLUE PLATFORM MERCHANDISE"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HUD/ShopUI/Panel" unique_id=141253]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = -20.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="HUD/ShopUI/Panel/ScrollContainer" unique_id=141264]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="CloseButton" type="Button" parent="HUD/ShopUI/Panel" unique_id=141275]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -50.0
+offset_right = 100.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Close Shop [B]"
+
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=571115066]
 replication_config = SubResource("SceneReplicationConfig_sync")

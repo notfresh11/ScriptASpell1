@@ -110,7 +110,7 @@ spawn_path = NodePath("../Players")
 [node name="Loot" type="Node3D" parent="."]
 
 [node name="LootSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/interactables/loot_item.tscn")
+_spawnable_scenes = PackedStringArray("res://scenes/interactables/loot_item.tscn", "res://scenes/interactables/glitch_cube.tscn")
 spawn_path = NodePath("../Loot")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]

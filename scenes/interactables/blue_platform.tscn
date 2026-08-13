@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://cxrypl7189qqs"]
+
+[ext_resource type="Script" uid="uid://cmf3sb351p8v8" path="res://scripts/interactables/blue_platform.gd" id="1_blue_script"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_platform"]
+size = Vector3(5, 2, 5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_platform"]
+size = Vector3(5, 0.2, 5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_blue"]
+albedo_color = Color(0.1, 0.4, 0.9, 1)
+emission_enabled = true
+emission = Color(0.0, 0.15, 0.4, 1)
+
+[node name="BluePlatform" type="Area3D"]
+collision_mask = 2
+script = ExtResource("1_blue_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("BoxShape3D_platform")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+mesh = SubResource("BoxMesh_platform")
+surface_material_override/0 = SubResource("StandardMaterial3D_blue")
