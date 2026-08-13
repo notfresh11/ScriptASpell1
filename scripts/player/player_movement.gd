@@ -39,7 +39,7 @@ func _enter_tree() -> void:
 @onready var torch_light: SpotLight3D = $Camera3D/TorchLight
 
 @export_group("Torch Light Settings")
-@export var torch_enabled_by_default: bool = true
+@export var torch_enabled_by_default: bool = false
 @export var torch_base_energy: float = 1.2
 @export var torch_flicker_speed: float = 8.0
 @export var torch_flicker_strength: float = 0.25
@@ -275,20 +275,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		if "DROP" in r_hand_res:
 			_try_drop()
 
-	# Toggle Torch (Taste F) - validăm prin interpreter (Tasta F devine Spell)
-	if event.is_action_pressed("toggle_flashlight"):
-		# În mod implicit, F era lanterna, dar acum aprinde și Spell (F)
-		# Dacă avem Spell configurat, se rulează acțiunile sale (Night Vision, Glow etc.)
-		# De asemenea, lăsăm comportamentul de a comuta vizibilitatea lanternei dacă nu e niciun spell special,
-		# sau le combinăm într-un mod amuzant
-		if torch_light:
-			torch_light.visible = not torch_light.visible
+	# Tasta F este acum procesată exclusiv prin interpreter (ca F_pressed sau F_just_pressed)
 
 # Proprietăți dinamice modificate de cod
 var current_speed_multiplier: float = 1.0
 var night_vision_active: bool = false
 var glow_active: bool = false
 var gravity_multiplier: float = 1.0
+
+var night_vision_mode_toggle: bool = false
+var glow_mode_toggle: bool = false
+var torch_mode_toggle: bool = false
 
 # Cooldown pentru tasta F (Spell)
 var spell_cooldown_active: bool = false
@@ -341,12 +338,22 @@ func _physics_process(delta: float) -> void:
 	if "SPEED" in body_res: current_speed_multiplier = body_res["SPEED"]
 	if "BOUNCY" in body_res: gravity_multiplier = 0.4
 
-	# Spell (F) se rulează la _unhandled_input, sau periodic dacă e Always
+	# Spell (F)
 	var spell_res = _execute_interpreter_section("Spell")
-	if "NIGHT_VISION" in spell_res: night_vision_active = true
-	else: night_vision_active = false
-	if "GLOW" in spell_res: glow_active = true
-	else: glow_active = false
+
+	if not night_vision_mode_toggle:
+		night_vision_active = "NIGHT_VISION" in spell_res or "NIGHT_VISION" in l_foot_res or "NIGHT_VISION" in r_foot_res or "NIGHT_VISION" in body_res
+
+	if not glow_mode_toggle:
+		glow_active = "GLOW" in spell_res or "GLOW" in l_foot_res or "GLOW" in r_foot_res or "GLOW" in body_res
+
+	if not torch_mode_toggle and is_instance_valid(torch_light):
+		var torch_requested = "LIGHT_TORCH" in spell_res or "LIGHT_TORCH" in l_foot_res or "LIGHT_TORCH" in r_foot_res or "LIGHT_TORCH" in body_res
+		if torch_requested:
+			torch_light.visible = true
+		else:
+			torch_light.visible = false
+
 	if "BOUNCY" in r_foot_res or "BOUNCY" in l_foot_res or "BOUNCY" in body_res or "BOUNCY" in spell_res:
 		gravity_multiplier = 0.4
 	else:
@@ -379,10 +386,20 @@ func _physics_process(delta: float) -> void:
 # --- INTERPRETER IMPLEMENTATION ---
 func _execute_interpreter_section(section: String) -> Dictionary:
 	var results: Dictionary = {}
-	var script_blocks = compiled_scripts.get(section, [])
+	var is_in_lobby: bool = false
+	var current_scene = get_tree().current_scene
+	if current_scene and current_scene.name == "TestingPlatform":
+		is_in_lobby = true
+
+	var script_blocks = []
+	if is_in_lobby:
+		script_blocks = Interpreter.get_default_script(section)
+	else:
+		script_blocks = compiled_scripts.get(section, [])
 
 	var i = 0
 	var if_condition_met = true
+	var current_condition_name = "Always"
 
 	while i < script_blocks.size():
 		var block = script_blocks[i]
@@ -396,6 +413,7 @@ func _execute_interpreter_section(section: String) -> Dictionary:
 				_trigger_chaos_engine("Syntax Error: IF block has no instruction body")
 				break
 
+			current_condition_name = param
 			# Evaluăm condiția
 			if_condition_met = _evaluate_condition(param)
 			if not if_condition_met:
@@ -437,9 +455,30 @@ func _execute_interpreter_section(section: String) -> Dictionary:
 			elif param == "3x": mult = 3.0
 			results["SPEED"] = mult
 		elif type == "NIGHT_VISION":
-			results["NIGHT_VISION"] = true
+			if current_condition_name.ends_with("_just_pressed"):
+				if if_condition_met:
+					night_vision_active = not night_vision_active
+					night_vision_mode_toggle = true
+			else:
+				night_vision_mode_toggle = false
+				results["NIGHT_VISION"] = true
 		elif type == "GLOW":
-			results["GLOW"] = true
+			if current_condition_name.ends_with("_just_pressed"):
+				if if_condition_met:
+					glow_active = not glow_active
+					glow_mode_toggle = true
+			else:
+				glow_mode_toggle = false
+				results["GLOW"] = true
+		elif type == "LIGHT_TORCH":
+			if is_instance_valid(torch_light):
+				if current_condition_name.ends_with("_just_pressed"):
+					if if_condition_met:
+						torch_light.visible = not torch_light.visible
+						torch_mode_toggle = true
+				else:
+					torch_mode_toggle = false
+					results["LIGHT_TORCH"] = true
 		elif type == "BOUNCY":
 			results["BOUNCY"] = true
 
@@ -454,9 +493,9 @@ func _evaluate_condition(cond: String) -> bool:
 		"S_pressed": return Input.is_action_pressed("move_backward")
 		"A_pressed": return Input.is_action_pressed("move_left")
 		"D_pressed": return Input.is_action_pressed("move_right")
-		"E_pressed": return Input.is_action_pressed("pickup")
-		"Q_pressed": return Input.is_action_pressed("drop")
-		"F_pressed": return Input.is_action_pressed("toggle_flashlight")
+		"E_just_pressed": return Input.is_action_just_pressed("pickup") or Input.is_action_pressed("pickup")
+		"Q_just_pressed": return Input.is_action_just_pressed("drop") or Input.is_action_pressed("drop")
+		"F_just_pressed": return Input.is_action_just_pressed("toggle_flashlight")
 		"Mouse_Moved":
 			# Simulat ca mișcare mouse activă
 			return Input.get_last_mouse_velocity().length() > 0.05
@@ -520,10 +559,26 @@ func _process(_delta: float) -> void:
 
 # --- INITIALIZE SCRIPTS ---
 func _init_default_scripts() -> void:
-	for section in SECTIONS:
-		compiled_scripts[section] = Interpreter.get_default_script(section)
-	# Duplicăm în pending inițial
-	pending_scripts = compiled_scripts.duplicate(true)
+	if not is_multiplayer_authority():
+		return
+
+	# Restaurăm stările persistente din NetworkManager dacă există deja salvate
+	if not NetworkManager.persistent_owned_blocks.is_empty():
+		owned_blocks = NetworkManager.persistent_owned_blocks.duplicate(true)
+	else:
+		# Blocuri implicite inițiale (fără LIGHT_TORCH, care se cumpără separat)
+		owned_blocks = ["IF", "ELSE", "WAIT", "LOOK_MOUSE", "MOVE_FORWARD", "MOVE_BACKWARD", "MOVE_LEFT", "MOVE_RIGHT", "PICKUP", "DROP"]
+		NetworkManager.persistent_owned_blocks = owned_blocks.duplicate(true)
+
+	if not NetworkManager.persistent_compiled_scripts.is_empty():
+		compiled_scripts = NetworkManager.persistent_compiled_scripts.duplicate(true)
+		pending_scripts = NetworkManager.persistent_pending_scripts.duplicate(true)
+	else:
+		for section in SECTIONS:
+			compiled_scripts[section] = Interpreter.get_default_script(section)
+		pending_scripts = compiled_scripts.duplicate(true)
+		NetworkManager.persistent_compiled_scripts = compiled_scripts.duplicate(true)
+		NetworkManager.persistent_pending_scripts = pending_scripts.duplicate(true)
 
 # --- CODING SYSTEM LOGIC (TASTA B) ---
 func toggle_coding_menu() -> void:
@@ -549,11 +604,14 @@ func _on_coding_reset_pressed() -> void:
 	var active_tab = coding_tab_bar.current_tab
 	var section = SECTIONS[active_tab]
 	pending_scripts[section] = Interpreter.get_default_script(section)
+	NetworkManager.persistent_pending_scripts = pending_scripts.duplicate(true)
 	_refresh_active_section_editor()
 
 func _on_coding_save_pressed() -> void:
 	# Copiem pending în compiled
 	compiled_scripts = pending_scripts.duplicate(true)
+	NetworkManager.persistent_compiled_scripts = compiled_scripts.duplicate(true)
+	NetworkManager.persistent_pending_scripts = pending_scripts.duplicate(true)
 	print("Scripturi salvate cu succes local!")
 	toggle_coding_menu()
 
@@ -714,6 +772,7 @@ func _add_block_to_current_section(block_id: String) -> void:
 		"type": block_id,
 		"param": default_param
 	})
+	NetworkManager.persistent_pending_scripts = pending_scripts.duplicate(true)
 
 	_refresh_active_section_editor()
 
@@ -724,10 +783,12 @@ func _move_block_in_section(section: String, index: int, direction: int) -> void
 		var temp = script_list[index]
 		script_list[index] = script_list[target_index]
 		script_list[target_index] = temp
+		NetworkManager.persistent_pending_scripts = pending_scripts.duplicate(true)
 		_refresh_active_section_editor()
 
 func _delete_block_from_section(section: String, index: int) -> void:
 	pending_scripts[section].remove_at(index)
+	NetworkManager.persistent_pending_scripts = pending_scripts.duplicate(true)
 	_refresh_active_section_editor()
 
 
@@ -821,6 +882,7 @@ func request_buy_block(block_id: String, cost: int) -> void:
 func receive_bought_block(block_id: String) -> void:
 	if not block_id in owned_blocks:
 		owned_blocks.append(block_id)
+		NetworkManager.persistent_owned_blocks = owned_blocks.duplicate(true)
 		# Re-populăm magazinul local ca să se facă update la prețuri și stări de deținere
 		if shop_ui and shop_ui.visible:
 			_populate_shop_items()
