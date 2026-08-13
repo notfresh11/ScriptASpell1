@@ -139,10 +139,10 @@ Vinde piese autorizate, sigure, dar foarte scumpe. Aici găsești blocuri logice
 ### B. Magazinul de Piraterie: The Medieval Bay
 Un magazin ascuns în colțul bazei unde se vând piese "crăpate" (*cracked*) la 80% reducere, dar cu riscuri ascunse de tip troieni magiști, malware și viruși:
 
-*   **Cracked Revive Block:** Are doar 30% șansă de succes. În 70% din cazuri va "fura" viața coechipierului cel mai apropiat pentru a te reanima pe tine.
+*   **Cracked Revive Block:** Are doar 30% șanse de succes. În 70% din cazuri, va „fura” viața coechipierului cel mai apropiat pentru a te reanima pe tine.
 *   **Spyware Sensor:** Un bloc extrem de ieftin, dar care rulează un keylogger în fundal, furându-ți din aurul colectat la fiecare pas pe care îl faci.
-*   **Adware Laser:** Armă extrem de ieftină și puternică, dar care din când în când se blochează și proiectează holograme imense de reclame luminoase și zgomotoase pentru taverne locale, atrăgând instantaneu toți monștrii din zonă.
-*   **The Ransomware Spell:** Un bloc care se blochează în dungeon și îți criptează toate vrăjile active. Operatorul sau exploratorul trebuie să plătească fizic aur din inventar hackerilor medievali ca să le debloceze.
+*   **Adware Laser:** O armă extrem de puternică și ieftină, dar din când în când se blochează și proiectează holograme imense de reclame luminoase și zgomotoase pentru taverne locale, atrăgând instantaneu toți monștrii din zonă.
+*   **The Ransomware Spell:** Un bloc care se blochează în dungeon și îți criptează toate vrăjile active. Operatorul sau exploratorul trebuie să plătească fizic aur din inventar hackerilor medievali ca să le deblokeze.
 *   **WinRAR Spellbook (Licențe Expirate):** O super vrajă care după 30 de utilizări îți blochează ecranul cu o hologramă imensă care îți cere să cumperi licența completă. Trebuie să nimerști un buton microscopic de "Continuă Evaluarea" în timp ce te fugăresc monștrii.
 
 ---
@@ -154,7 +154,7 @@ Un magazin ascuns în colțul bazei unde se vând piese "crăpate" (*cracked*) l
 *   **The CAPTCHA Gates:** Poți deschide certain uși de securitate doar dacă rezolvi rapid un CAPTCHA pe tabletă sub presiunea timpului (ex: "selectează toate pozele cu căruțe medievale").
 *   **The Garbage Collector:** Un schelet uriaș cu o mătură din nuiele care patrulează prin dungeon și "șterge" fizic tot ce e lăsat pe jos: loot, capcane de cod active sau iteme temporare.
 *   **Pop-up Phantoms:** Fantome mici sub formă de ferestre de spam care îți blochează ecranul. Operatorul le poate închide de la distanță pe terminal, sau exploratorii le pot lovi fizic cu arma.
-*   **The Stack Overflow Ghost:** O masă amorfă de caractere roz neon luminoase și erori care bântuie dungeon-ul. Este creată din toate blocurile stricate și scripturile pe care Operatorul le-a aruncat în Recycle Bin și folosește propriile tale coduri șterse ca să te atace!
+*   **The Stack Overflow Ghost:** O masă amorfă de caractere roz neon luminoase și erori care bântuie dungeon-ul. Esste creată din toate blocurile stricate și scripturile pe care Operatorul le-a aruncat în Recycle Bin și folosește propriile tale coduri șterse ca să te atace!
 *   **The Blue Screen of Death (BSOD) Barrier:** Când un cod dă un crash catastrofal de sistem, în fața jucătorului apare o placă masivă de piatră albastră cu textul de eroare. Jucătorul este blocat și nevăzător până când un coleg vine și îi dă fizic o manetă de "Hard Reboot" pe spate.
 *   **The Duck Debugger Monster:** O rață gigantică de cauciuc care patrulează în tăcere. Când te vede, îți citește codul actual cu o voce robotizată și activează instantaneu orice vulnerabilitate ascunsă în scripturile tale (ex: îți forțează cizmele să o ia la goană necontrolat spre un hău).
 *   **Hot-Tub Debugging:** În hub, jucătorii stau într-un jacuzzi medieval care scoate bule verzi (*Antivirus Bath*) pentru a se curăța pe ei și echipamentele lor de virușii și spyware-ul adunate din magazinul pirat Medieval Bay.
@@ -216,28 +216,6 @@ Pentru faza de Bare-bones, scriptarea nu va folosi un compilator real de limbaj 
 *   Blocurile Scratch/Text sunt traduse local într-o listă de instrucțiuni simple (ex: `[{"op": "SET", "var": "speed", "val": 15}, {"op": "WAIT", "val": 5}]`).
 *   Interpreterul parcurge această listă. Dacă detectează o excepție (valoare prea mare, buclă infinită fără `WAIT`), emite un semnal către `ChaosEngine` pe server: `ChaosEngine.trigger_runtime_glitch(player_id, glitch_type)`.
 
-### D. Structura de Bază a Chaos Engine
-Nodul Singleton `chaos_engine.gd` primește notificări despre erori și apelează RPC-uri pentru a sincroniza efectul haotic pe toți clienții:
-```gdscript
-# Exemplu conceptual de structură pentru chaos_engine.gd în Godot 4
-extends Node
-
-signal error_intercepted(player_id: int, type: String)
-
-func trigger_syntax_crash(player_id: int, crash_type: String) -> void:
-	match crash_type:
-		"CHICKEN_PARTY":
-			rpc("apply_chicken_party", player_id)
-		"BACKROOMS":
-			rpc("teleport_to_backrooms", player_id)
-
-@rpc("call_local", "reliable")
-func apply_chicken_party(player_id: int) -> void:
-	# Codul care înlocuiește modelul 3D cu o găină bouncy, activează ragdoll
-	# și modifică vocea sau dezactivează controalele de vrăji temporar.
-	pass
-```
-
 ---
 
 ## 10. GHIDUL AGENTULUI & PROTOCOALE DE COMPORTAMENT
@@ -266,9 +244,10 @@ Pentru a asigura că Agentul își amintește preferințele utilizatorului și d
 *   **Regula LL-01 (Scope Limit):** Focusul curent este pe un **Bare-bones game / MVP (Minimum Viable Product)**. Sistemul de Modding nativ și alte funcționalități extrem de avansate sunt amânate și nu reprezintă o prioritate.
 *   **Regula LL-02 (Godot Version Constraint):** Toate elementele de design tehnic și eventualele prototipuri de cod trebuie scrise exclusiv pentru **Godot 4.x** și **GDScript modern**.
 *   **Regula LL-03 (Language Boundary):** Documentul `agents.md` și comunicarea cu utilizatorul se vor desfășura în **limba română**, păstrând însă termenii tehnici consacrați în limba engleză (ex: *multiplayer, RPC, authority, ragdoll, debugging, loop, syntax, runtime, etc.*) pentru a menține precizia profesională.
-*   **Regula LL-04 (Multiplayer Spawner Names):** Atunci când instanțiem scene dinamice în rețea care sunt replicate prin `MultiplayerSpawner`, adăugarea lor în arborele de scene trebuie făcută exclusiv prin `add_child(node, true)`. Argumentul `true` forțează generarea de nume lizibile și valide în rețea (evitând caracterele speciale precum `@` din `@RigidBody3D@105`), lucru esențial pentru ca auto-spawn-ul să funcționeze corect fără erori de rețea.
+*   **Regula LL-04 (Multiplayer Spawner Names):** Atunci când instanțiem scene dinamice în rețea care sunt replicate prin `MultiplayerSpawner`, adăugarea lor în arborele de scene trebuie făcută exclusiv prin `add_child(node, true)`. Argumentul `true` forțează generarea de nume vizibile și valide în rețea (evitând caracterele speciale precum `@` din `@RigidBody3D@105`), lucru esențial pentru ca auto-spawn-ul să funcționeze corect fără erori de rețea.
 *   **Regula LL-05 (Mouse Filter & Input Event):** Pentru a preveni ca elementele din HUD sau alte panouri de control 2D să blocheze rotația camerei sau mișcarea mouse-ului, rotația trebuie procesată în funcția `_input(event)` (nu în `_unhandled_input(event)`). De asemenea, toate elementele UI de tip `Control` trebuie configurate cu `mouse_filter = MOUSE_FILTER_IGNORE` (`2`) dacă nu necesită interacțiune directă cu mouse-ul.
 *   **Regula LL-06 (Dungeon Grid Alignment):** Toate piesele modulare de dungeon trebuie modelate pe un grid pătrat matematic fix de exact `10x10` metri, cu originea locală la `(0, 0, 0)`. Această scală exterioară este obligatorie pentru a asigura îmbinarea perfectă fără spații/goluri (void) sau suprapuneri, indiferent de cât de înguste sau întortocheate sunt coridoarele din interiorul piesei.
+*   **Regula LL-07 (TSCN UID Warning Removal):** Pentru a asigura compatibilitatea și eliminarea warning-urilor 'invalid UID' la partajarea fișierelor de scenă, se vor șterge atributele `uid` din elementele `[ext_resource]` ale fișierelor `.tscn` modificate manual.
 
 ---
 
@@ -365,39 +344,41 @@ Proiectul are acum un sistem de interacțiune, economie și inventar extrem de s
 *   **Problema:** Schimbarea rezoluției din editor la 1920x1080 fără definirea explicită a viewport-ului de bază în setări cauza o pixelare și scalare urâtă a textului și a HUD-ului.
 *   **Rezolvarea:** Am configurat explicit rezoluția de bază a viewport-ului la 1920x1080 în `project.godot` sub secțiunea `[display]`, asigurând un rendering crisp și de înaltă definiție pentru interfață.
 
+---
+
 ### SESIUNEA 3: Implementare Flux Exterior (Map1), Uși de Dungeon și Game Loop Fundamental
 
 #### A. Unde suntem acum (Project State)
 Proiectul are acum un Game Loop complet funcțional în stil *Lethal Company*, oferind o structură clară de început-mijloc-sfârșit:
-1. **Lobby (Testing Platform):** Jucătorii pornesc pe platformă, stau pe zona roșie de expediție, iar la îndeplinirea condiției de pregătire, serverul încarcă harta exterioară.
-2. **Harta Exterioară (Map1):** O nouă scenă exterioară dedicată (`scenes/map1/map1.tscn` și `scripts/map1/map1.gd`) ce simulează exteriorul dungeon-ului. Conține spawn-uri pentru exploratori, o structură de intrare masivă și generatorul de dungeon procedural situat sub pământ la un offset de siguranță (Y = -100).
-3. **Mecanica de Uși de Dungeon (Dungeon Doors):**
-   - S-a creat o nouă scenă de interacțiune statică reutilizabilă: `DungeonDoor` (`scenes/interactables/dungeon_door.tscn` și `scripts/interactables/dungeon_door.gd`).
-   - Două uși sunt plasate static în scenă la încărcare: una în exterior (`ExteriorDoor`) și una în interiorul punctului de intrare al dungeon-ului (`InteriorDoor`).
-   - Ușile folosesc grupul dedicat `door` și sunt complet integrate cu RayCast-ul local al jucătorilor, afișând prompt-uri dinamice iluminate cyan neon: `[E] Enter Dungeon` și `[E] Exit Dungeon`.
-4. **Sistem de Teleportare Server-Authoritative:**
-   - La apăsarea tastei `E`, clientul trimite un RPC sigur către server (`request_door_interact`).
-   - Serverul validează acțiunea și teleporteză instantaneu jucătorul la poziția ușii pereche.
-   - Poziția este sincronizată în timp real la toți clienții conectați prin `MultiplayerSynchronizer`.
-   - Toate obiectele adunate în inventar (loot-ul) sunt perfect păstrate și transportate între exterior și interior.
+1.  **Lobby (Testing Platform):** Jucătorii pornesc pe platformă, stau pe zona roșie de expediție, iar la îndeplinirea condiției de pregătire, serverul încarcă harta exterioară.
+2.  **Harta Exterioară (Map1):** O nouă scenă exterioară dedicată (`scenes/map1/map1.tscn` și `scripts/map1/map1.gd`) ce simulează exteriorul dungeon-ului. Conține spawn-uri pentru exploratori, o structură de intrare masivă și generatorul de dungeon procedural situat sub pământ la un offset de siguranță (Y = -100).
+3.  **Mecanica de Uși de Dungeon (Dungeon Doors):**
+    *   S-a creat o nouă scenă de interacțiune statică reutilizabilă: `DungeonDoor` (`scenes/interactables/dungeon_door.tscn` și `scripts/interactables/dungeon_door.gd`).
+    *   Două uși sunt plasate static în scenă la încărcare: una în exterior (`ExteriorDoor`) și una în interiorul punctului de intrare al dungeon-ului (`InteriorDoor`).
+    *   Ușile folosesc grupul dedicat `door` și sunt complet integrate cu RayCast-ul local al jucătorilor, afișând prompt-uri dinamice iluminate cyan neon: `[E] Enter Dungeon` și `[E] Exit Dungeon`.
+4.  **Sistem de Teleportare Server-Authoritative:**
+    *   La apăsarea tastei `E`, clientul trimite un RPC sigur către server (`request_door_interact`).
+    *   Serverul validează acțiunea și teleporteză instantaneu jucătorul la poziția ușii pereche.
+    *   Poziția este sincronizată în timp real la toți clienții conectați prin `MultiplayerSynchronizer`.
+    *   Toate obiectele adunate în inventar (loot-ul) sunt perfect păstrate și transportate între exterior și interior.
 
 #### B. Bugs Întâmpinate & Rezolvări Tehnice
 
 ##### 1. Sincronizarea Ușilor Dinamice în Rețea
-* **Problema:** Inițial, ușa din interiorul dungeon-ului era generată dinamic de server la pornire și adăugată ca și copil în generator. Fără un `MultiplayerSpawner` configurat special să asculte de noi uși, clienții nu instanțiau ușa local, neputând să o vadă sau să interacționeze cu ea.
-* **Rezolvarea:** Am simplificat și optimizat designul, plasând ambele uși (`ExteriorDoor` și `InteriorDoor`) static în scena `map1.tscn` la încărcare. Acest lucru garantează că toți clienții încarcă și instanțiază ușile instantaneu și sincron, serverul ocupându-se doar de corelarea și sincronizarea destinațiilor de teleportare (`target_position`) prin RPC la început.
+*   **Problema:** Inițial, ușa din interiorul dungeon-ului era generată dinamic de server la pornire și adăugată ca și copil în generator. Fără un `MultiplayerSpawner` configurat special să asculte de noi uși, clienții nu instanțiau ușa local, neputând să o vadă sau să interacționeze cu ea.
+*   **Rezolvarea:** Am simplificat și optimizat designul, plasând ambele uși (`ExteriorDoor` și `InteriorDoor`) static în scena `map1.tscn` la încărcare. Acest lucru garantează că toți clienții încarcă și instanțiază ușile instantaneu și sincron, serverul ocupându-se doar de corelarea și sincronizarea destinațiilor de teleportare (`target_position`) prin RPC la început.
 
 ##### 2. Eșecul de Teleportare al Clienților prin Uși din cauza Autorității Rețelei (MultiplayerAuthority)
-* **Problema:** Când un jucător client apăsa tasta `E` pe o ușă, serverul primea cererea de teleportare și încerca să seteze direct coordonatele jucătorului (`p_node.global_position = target_pos`). Însă, deoarece clienții dețin autoritatea rețelei (`MultiplayerAuthority`) asupra propriului lor nod de mișcare FPS, orice modificare de poziție făcută pe server era complet ignorată și suprascrisă în cadrul următor de sincronizarea automată (`MultiplayerSynchronizer`) a clientului, blocând teleportarea.
-* **Rezolvarea:** Am implementat o funcție RPC suplimentară de teleportare securizată numită `teleport_to(target_pos: Vector3)` pe clienți. Serverul identifică acum peer-ul care a solicitat teleportarea, iar în loc să-i forțeze poziția direct, trimite un apel `rpc_id` către acel client specific (dacă este client conectat) sau aplică poziția local direct (dacă este Host-ul/Serverul local). Clientul își setează astfel local noua poziție, iar `MultiplayerSynchronizer` o propagă de jos în sus, garantând o teleportare sigură și bidirecțională (intrare/ieșire din dungeon) fără pierderi de pachete.
+*   **Problema:** Când un jucător client apăsa tasta `E` pe o ușă, serverul primea cererea de teleportare și încerca să seteze direct coordonatele jucătorului (`p_node.global_position = target_pos`). Însă, deoarece clienții dețin autoritatea rețelei (`MultiplayerAuthority`) asupra propriului lor nod de mișcare FPS, orice modificare de poziție făcută pe server era complet ignorată și suprascrisă în cadrul următor de sincronizarea automată (`MultiplayerSynchronizer`) a clientului, blocând teleportarea.
+*   **Rezolvarea:** Am implementat o funcție RPC suplimentară de teleportare securizată numită `teleport_to(target_pos: Vector3)` pe clienți. Serverul identifică acum peer-ul care a solicitat teleportarea, iar în loc să-i forțeze poziția direct, trimite un apel `rpc_id` către acel client specific (dacă este client conectat) sau aplică poziția local direct (dacă este Host-ul/Serverul local). Clientul își setează astfel local noua poziție, iar `MultiplayerSynchronizer` o propagă de jos în sus, garantând o teleportare sigură și bidirecțională (intrare/ieșire din dungeon) fără pierderi de pachete.
 
 ##### 3. Generare Dublă a Dungeon-ului și Suprapunere de Caractere (Double-Spawning)
-* **Problema:** Deoarece `DungeonGenerator` a fost instanțiat ca un copil static în scena `map1.tscn`, funcția sa de `_ready()` rula automat în paralel cu `map1.gd`. Ambele scripturi încercau să genereze dungeon-ul procedural și să spawneze jucătorii în același timp. Acest lucru cauza generarea a două structuri suprapuse ("platforme unele peste altele"), overlap-ul a două interfețe HUD (care producea flicker și bug-uri vizuale pe textul de holding/active item), precum și duplicarea nodurilor de jucători.
-* **Rezolvarea:** Am adăugat un filtru în `dungeon_generator.gd`'s `_ready()`. Acesta verifică dacă generatorul rulează ca scenă principală de sine stătătoare (în modul de testare/offline) sau ca parte din `Map1`. Dacă este copil în `Map1`, generatorul își distruge UI-ul CanvasLayer local suprapus și deleagă în întregime inițializarea, generarea unică și spawnarea corectă a jucătorilor către scriptul părinte `map1.gd`.
+*   **Problema:** Deoarece `DungeonGenerator` a fost instanțiat ca un copil static în scena `map1.tscn`, funcția sa de `_ready()` rula automat în paralel cu `map1.gd`. Ambele scripturi încercau să genereze dungeon-ul procedural și să spawneze jucătorii în același timp. Acest lucru cauza generarea a două structuri suprapuse ("platforme unele peste altele"), overlap-ul a două interfețe HUD (care producea flicker și bug-uri vizuale pe textul de holding/active item), precum și duplicarea nodurilor de jucători.
+*   **Rezolvarea:** Am adăugat un filtru în `dungeon_generator.gd`'s `_ready()`. Acesta verifică dacă generatorul rulează ca scenă principală de sine stătătoare (în modul de testare/offline) sau ca parte din `Map1`. Dacă este copil în `Map1`, generatorul își distruge UI-ul CanvasLayer local suprapus și deleagă în întregime inițializarea, generarea unică și spawnarea corectă a jucătorilor către scriptul părinte `map1.gd`.
 
 ##### 4. Teleportarea Eronată și Pierderea Obiectelor Aruncate (Loot Drop Bug)
-* **Problema:** Când un jucător dădea drop la un obiect (`Q`), serverul instanția loot-ul și îi seta coordonatele folosind `loot_item.position = spawn_pos` înainte de a adăuga nodul în scenă. Deoarece `spawn_pos` este o poziție globală, iar elementele de loot erau adăugate ca copii în containerul de loot al generatorului situat la offset-ul `Y = -100`, coordonatele locale deveneau relative la offset, teleportând instantaneu obiectele aruncate în dungeon (dacă erai afară) sau în vid (dacă erai în dungeon).
-* **Rezolvarea:** Am corectat procesul de spawnare a loot-ului în `request_drop`. Acesta rezolvă acum dinamic containerul corect de loot în funcție de scena activă (prin `get_tree().current_scene`), adaugă copilul în arbore, iar apoi îi setează coordonata globală direct prin `loot_item.global_position = spawn_pos`. Acest lucru asigură că obiectele aruncate cad precis pe sol în locul dorit, atât în interiorul cât și în exteriorul dungeon-ului.
+*   **Problema:** Când un jucător dădea drop la un obiect (`Q`), serverul instanția loot-ul și îi seta coordonatele folosind `loot_item.position = spawn_pos` înainte de a adăuga nodul în scenă. Deoarece `spawn_pos` este o poziție globală, iar elementele de loot erau adăugate ca copii în containerul de loot al generatorului situat la offset-ul `Y = -100`, coordonatele locale deveneau relative la offset, teleportând instantaneu obiectele aruncate în dungeon (dacă erai afară) sau în vid (dacă erai în dungeon).
+*   **Rezolvarea:** Am corectat procesul de spawnare a loot-ului în `request_drop`. Acesta rezolvă acum dinamic containerul corect de loot în funcție de scena activă (prin `get_tree().current_scene`), adaugă copilul în arbore, iar apoi îi setează coordonata globală direct prin `loot_item.global_position = spawn_pos`. Acest lucru asigură că obiectele aruncate cad precis pe sol în locul dorit, atât în interiorul cât și în exteriorul dungeon-ului.
 
 ---
 
@@ -405,34 +386,73 @@ Proiectul are acum un Game Loop complet funcțional în stil *Lethal Company*, o
 
 #### A. Unde suntem acum (Project State)
 Proiectul are acum un Game Loop complet și robust la nivel de MVP (Minimum Viable Product):
-1. **Platforma Verde de Colectare & Evacuare (Green Platform):**
-   * Creată o scenă 3D de platformă verde reutilizabilă (`scenes/interactables/green_platform.tscn` și `scripts/interactables/green_platform.gd`) integrată în `map1.tscn` și `testing_platform.tscn`.
-2. **Mecanica de Countdown Sincronizată pe Server (Confirmation & Escape):**
-   * Când toți jucătorii activi sunt prezenți pe platforma verde exterioară, pornește un timer de confirmare de 10 secunde (se anulează instantaneu dacă un jucător părăsește platforma).
-   * La finalul confirmării, se activează numărătoarea inversă de evacuare de 15 secunde.
-   * Jucătorii lăsați în urmă sunt eliminați fizic și își pierd tot inventarul.
-3. **Wipe total de inventar la evacuare (Core Loop Carryover Fix):**
-   * Orice item ținut în inventar sau în mână este complet șters la evacuare prin RPC-uri clare de curățare a inventarului (`clear_inventory`), respectând regula de a nu putea căra obiecte în mână la teleportarea în lobby.
-4. **Teleportare physical-loot și Spawning în Lobby:**
-   * Doar itemele (loot-ul) aflate fizic pe platforma verde exterioară la scurngerea timpului sunt salvate în `NetworkManager` și teleportate/spawnate în lobby pe platforma verde interioară.
-5. **Auto-vânzare în Lobby cu delay de 5 secunde:**
-   * Loot-ul spawnat sau adus manual pe platforma din Lobby are un delay de 5.0 secunde (oferind feedback vizual direct jucătorilor) înainte de a fi vândut automat, adăugând credite în soldul global (`team_credits`).
-6. **HUD HUD credite și countdown:**
-   * Adăugate elementele dinamice `CreditsLabel` (stânga sus) și `EscapeLabel` (centru sus, sincronizată prin RPC) pe interfața jucătorului.
+1.  **Platforma Verde de Colectare & Evacuare (Green Platform):**
+    *   Creată o scenă 3D de platformă verde reutilizabilă (`scenes/interactables/green_platform.tscn` și `scripts/interactables/green_platform.gd`) integrată în `map1.tscn` și `testing_platform.tscn`.
+2.  **Mecanica de Countdown Sincronizată pe Server (Confirmation & Escape):**
+    *   Când toți jucătorii activi sunt prezenți pe platforma verde exterioară, pornește un timer de confirmare de 10 secunde (se anulează instantaneu dacă un jucător părăsește platforma).
+    *   La finalul confirmării, se activează numărătoarea inversă de evacuare de 15 secunde.
+    *   Jucătorii lăsați în urmă sunt eliminați fizic și își pierd tot inventarul.
+3.  **Wipe total de inventar la evacuare (Core Loop Carryover Fix):**
+    *   Orice item ținut în inventar sau în mână este complet șters la evacuare prin RPC-uri clare de curățare a inventarului (`clear_inventory`), respectând regula de a nu putea căra obiecte în mână la teleportarea în lobby.
+4.  **Teleportare physical-loot și Spawning în Lobby:**
+    *   Doar itemele (loot-ul) aflate fizic pe platforma verde exterioară la scurgerea timpului sunt salvate în `NetworkManager` și teleportate/spawnate în lobby pe platforma verde interioară.
+5.  **Auto-vânzare în Lobby cu delay de 5 secunde:**
+    *   Loot-ul spawnat sau adus manual pe platforma din Lobby are un delay de 5.0 secunde (oferind feedback vizual direct jucătorilor) înainte de a fi vândut automat, adăugând credite în soldul global (`team_credits`).
+6.  **HUD credite și countdown:**
+    *   Adăugate elementele dinamice `CreditsLabel` (stânga sus) și `EscapeLabel` (centru sus, sincronizată prin RPC) pe interfața jucătorului.
 
 #### B. Bugs Întâmpinate & Rezolvări Tehnice
 
 ##### 1. Eșec de detecție loot pe platformă (Collision Mask)
-* **Problema:** Platforma verde avea `collision_mask = 3`, dar loot items au `collision_layer = 4` (bit 3). Am crescut masca la `collision_mask = 7` (detectează și layer 2 de jucători, și layer 4 de loot).
-* **Rezolvarea:** Am actualizat `collision_mask = 7` pe Area3D a platformei verzi în `.tscn` pentru a intercepta și înregistra corect obiectele de loot.
+*   **Problema:** Platforma verde avea `collision_mask = 3`, dar loot items au `collision_layer = 4` (bit 3). Am crescut masca la `collision_mask = 7` (detectează și layer 2 de jucători, și layer 4 de loot).
+*   **Rezolvarea:** Am actualizat `collision_mask = 7` pe Area3D a platformei verzi în `.tscn` pentru a intercepta și înregistra corect obiectele de loot.
 
 ##### 2. Duplicare / Reapariție iteme din inventar (Stale Inventory State)
-* **Problema:** Itemele din mâini reapăreau când jucătorii se întorceau în expediție deoarece inventarele erau memorate persistente. Am scos salvarea inventarului pentru a forța carryover strict bazat pe platformă (no inventory keep on escape).
-* **Rezolvarea:** Am implementat RPC-ul `clear_inventory` pe player_movement, apelat pe server la evacuare pentru a asigura un wipe complet al inventarului pe toți clienții.
+*   **Problema:** Iteme-le din mâini reapăreau când jucătorii se întorceau în expediție deoarece inventarele erau memorate persistente. Am scos salvarea inventarului pentru a forța carryover strict bazat pe platformă (no inventory keep on escape).
+*   **Rezolvarea:** Am implementat RPC-ul `clear_inventory` pe player_movement, apelat pe server la evacuare pentru a asigura un wipe complet al inventarului pe toți clienții.
 
 ##### 3. Vânzare fantomă (Race condition)
-* **Problema:** Dacă un jucător ridica o piesă de pe platforma din lobby în cele 5 secunde, piesa se vindea în continuare și dispărea din mână.
-* **Rezolvarea:** Am adăugat o verificare `if not loot_node in loot_on_platform: return` în funcția de vânzare pentru a opri vânzarea automată dacă piesa este ridicată în timpul delay-ului de 5 secunde.
+*   **Problema:** Dacă un jucător ridica o piesă de pe platforma din lobby în cele 5 secunde, piesa se vindea în continuare și dispărea din mână.
+*   **Rezolvarea:** Am adăugat o verificare `if not loot_node in loot_on_platform: return` în funcția de vânzare pentru a opri vânzarea automată dacă piesa este ridicată în timpul delay-ului de 5 secunde.
+
+---
+
+### SESIUNEA 5: Implementare Sistem Complet de Runic Coding, Shop de Blocuri și Chaos Engine
+
+#### A. Ce s-a realizat în această sesiune (Project State)
+S-a adăugat o structură completă și stabilă pentru magazia de programare runică din „Script a Spell”:
+1.  **Platforma Albastră (`scenes/interactables/blue_platform.tscn`):**
+    *   Plasată static în Lobby (`testing_platform.tscn`) la coordonata `(-8, 0, 0)`.
+    *   La pasul jucătorului pe ea, se deschide automat magazinul de blocuri, iar controlul fizic este blocat.
+2.  **Shop-ul de Blocuri Runic:**
+    *   Meniu integrat în HUD-ul local ce folosește RPC server-authoritative pentru scăderea creditelor globale (`team_credits`) și adăugarea permanentă a noului bloc achiziționat în inventarul de blocuri deținute (`owned_blocks`).
+3.  **Runic Coder (Tasta B):**
+    *   Meniu visual complet cu 7 tab-uri corespunzătoare părților corpului (Head, L Hand, R Hand, L Foot, R Foot, Body, Spell).
+    *   Sistem Scratch-like de adăugare de blocuri, ordonare (▲/▼), dropdown cu parametri (ex: `W_pressed`, `Always`, `F_just_pressed`) și ștergere.
+    *   Buton de Reset Default și buton de Save & Execute (ce compilează local scriptul).
+4.  **Interpreter Runic și Execuție:**
+    *   Se execută secvențial în funcție de starea tastelor și evaluările `IF`/`ELSE`.
+    *   Suportă condiții de hold (`_pressed`, `Always`) și acțiuni de toggle declanșate la evenimente unice (`_just_pressed` pe acțiuni vizuale precum `NIGHT_VISION`, `GLOW`, `LIGHT_TORCH`).
+5.  **Persistența stării în `NetworkManager`:**
+    *   Codul salvat, cel în curs de editare și blocurile deținute sunt stocate persistent în singletons la teleportări și încărcări de scene (astfel nu se pierde codul când jucătorii trec în Dungeon și înapoi în Lobby).
+6.  **Restricționare Lobby/Dungeon:**
+    *   Interpreterul forțează rularea exclusivă a default-urilor standard (mișcare liberă) cât timp jucătorul se află în Lobby (`TestingPlatform`), deblocând rularea scripturilor custom exclusiv în interiorul dungeon-ului (`Map1`).
+7.  **Chaos Engine (Godot Glitch Cube):**
+    *   Dacă interpreterul depistează o eroare de sintaxă activată (de ex: un bloc `IF` gol la capăt sau `ELSE` deconectat), apelează `ChaosEngine` pe server. Serverul instanțiază și replicează pe toți clienții (prin containerul `Loot` și `MultiplayerSpawner`) un cub static ne-interactiv decorat cu logoul clasic Godot (`icon.svg`) în fața jucătorului.
+
+#### B. Bugs Întâmpinate & Rezolvări Tehnice
+
+##### 1. Parse Error în `testing_platform.tscn` din cauza unbalanced quotes
+*   **Problema:** Adăugarea platformei albastre direct în scenă prin format text a cauzat o ghilimea unbalanced: `unique_id=2081541337"`, ceea ce a corupt complet parsarea hărții de lobby și a blocat crearea jocurilor.
+*   **Rezolvarea:** S-a corectat ghilimeaua lipsă la formatul corect `unique_id="2081541337"`.
+
+##### 2. Avertismente UNUSED_VARIABLE pe GDScript reload
+*   **Problema:** Declararea variabilelor locale neutilizate (`look_mouse_allowed`, `try_pickup_cmd`, `try_drop_cmd`, `double_jump_allowed`) și parametrul `tab` fără prefix în callback-uri au umplut consola de warning-uri de compilare.
+*   **Rezolvarea:** S-au eliminat complet variabilele neutilizate și s-a adăugat prefixul de underscore parametrului tab (`_tab`).
+
+##### 3. Avertismente de 'invalid UID' pe scenele modificate
+*   **Problema:** Copierea UID-urilor unice generate în medii locale în fișierele `.tscn` trimise a aruncat erori de UID invalid la pornirea motorului.
+*   **Rezolvarea:** S-au eliminat atributele `uid="..."` din resursele externe încărcate în scene, permițând Godot să le încarce curat direct pe baza căii lor text.
 
 ---
 
@@ -480,9 +500,7 @@ Această secțiune definește mecanica centrală și unică de transport și val
 
 ## 13. ROADMAP OFICIAL DE DEZVOLTARE (DIRECȚIA MVP SPRE STEAM ALPHA)
 
-Pentru a asigura o dezvoltare fluidă, eficientă și extrem de motivantă (fără a ne bloca în detalii prea devreme), am stabilit de comun acord următorul Roadmap în etape clare. Prioritatea este de a avea un joc funcțional de tip **Lethal Company/Pilgrim** la nivel de bază, transformându-l iterativ într-un produs unic de succes pentru Steam Wishlists.
-
-### ETAPA 1: LUMINĂ ȘI ATMOSFERĂ (Următorul pas)
+### ETAPA 1: LUMINĂ ȘI ATMOSFERĂ (Următorul pas curent)
 *   **Scop:** Schimbarea atmosferei jocului de la un prototip steril de "Tetris" la un veritabil survival horror medieval-cyberpunk, adoptând o estetică extrem de retro, texturată și degradată (Varianta A).
 *   **Livrabile:**
     *   Sistem de iluminare dramatic în Dungeon (întuneric profund, lumini Omni de tip torțe de perete slabe, ceață volumetrică low-poly).
@@ -507,23 +525,32 @@ Pentru a asigura o dezvoltare fluidă, eficientă și extrem de motivantă (făr
     *   Sistem de spawnare de inamici pe server sincronizat pe clienți.
 
 ### ETAPA 4: POLISH — FAZA 1 (Finisare elemente de bază)
-*   **Scop:** Oferirea unui feedback senzorial satisfăcător pentru acțiunile de bază ale jucătorilor.
+*   **Scop:** Oferirea unui feedback senzorial satisfăcător pentru acțiunile de bază de joc.
 *   **Livrabile:**
     *   Sunete retro (pași în ecou pe piatră, sunet de pickup/drop loot, alarme de countdown).
     *   Îmbunătățirea interfeței (HUD) cu efecte de tip glitch neon și indicatori mai clari pentru starea coechipierilor și a inventarului.
     *   Sesiuni de playtest co-op pe rețea locală / online pentru identificarea problemelor de gameplay.
 
 ### ETAPA 5: PROGRAMARE LUCRURI UNICE (Identity & Innovation)
-*   **Scop:** Introducerea mecanicilor unice descrise în GDD care fac acest joc diferit de orice alt clona de Lethal Company.
+*   **Scop:** Reîntoarcerea la mecanicile unice de gameplay asimetric (Operator vs Exploratori).
 *   **Livrabile:**
     *   **Digitizarea Loot-ului:** Scanarea obiectelor în tablete, gestionarea spațiului de Buffer (MB) și limitarea capacității locale de stocare.
     *   **Terminalul Operatorului & Git Pull:** Adăugarea terminalului interactiv din buncăr unde Operatorul scrie comenzi reale (`git pull`, `git clean`) pentru a descărca datele exploratorilor și a le transforma în bani.
     *   **Hard Disk Drop (HDD):** Drop-ul fizic al unui HDD masiv la locul morții jucătorului pentru a recupera manual datele nescărcate.
-    *   **Chaos Engine:** Trigger-ul de glitch-uri comice (Chicken Party, Backrooms, inversare taste, etc.) atunci când codul sau conexiunile se corup.
 
-### ETAPA 6: POLISH FINAL SPRE STEAM WISHLISTS
-*   **Scop:** Împachetarea jocului într-un build perfect stabil și optimizat pentru publicare și promovare.
-*   **Livrabile:**
-    *   Sistem de Quota progresiv (Zile/Cote de îndeplinit) și scenariul de eșec (Soul Defrag / Recycle Bin reset).
-    *   Polishing pe partea de rețea, eliminarea oricăror erori din logs.
-    *   Crearea materialelor vizuale (capturi de ecran atrăgătoare, gameplay capturat în 4 jucători) pentru lansarea paginii de Steam și începerea campaniei de Wishlist.
+### ETAPA 6: PIVOT LOGICĂ CODING & POLISH FINAL
+*   **Scop:** Finisarea și transformarea sistemului de coding în "cireașa de pe tot" a jocului, concentrându-l exclusiv pe distracție, sandbox și haos fizic.
+*   **Planificarea de viitor (TO-DO):**
+    1.  **Controale Native Permanente:** Trecerea completă a mișcării WASD, mouse look, pickup și drop în mod nativ permanent pe jucător (fără a depinde de cod).
+    2.  **Meniu de Coding Exclusiv pe Spell (F) și Upgrade-uri Active:** Coding-ul va fi folosit exclusiv pentru abilități speciale cumpărate de la magazin sau slotul de spell-uri.
+    3.  **Blocuri cu Fizică Haotică:**
+        *   `DASH` (impuls fizic violent înainte).
+        *   `RAGDOLL` (corpul devine moale și elastic, alunecând haotic).
+        *   `MAGNET` (atragerea obiectelor de pe o rază).
+    4.  **Erori Haotice Chaos Engine:**
+        *   *Infinite Loop:* Jucătorul intră în rotație ragdoll necontrolată pe podea până când un coleg îi dă o palmă (Manual Reset).
+        *   *Chicken Party:* Transformarea temporară a jucătorului într-o găină bouncy roz neon care scoate sunete comice.
+        *   *Inversed Controls:* Inversarea direcțiilor de la tastatură timp de 10 secunde.
+        *   *Segment Fault:* Spawning de zeci de cuburi bouncy Godot de care jucătorii se împiedică fizic în coridoare.
+    5.  Sistem de Quota progresiv (Zile/Cote de îndeplinit) și scenariul de eșec (Soul Defrag / Recycle Bin reset).
+    6.  Crearea materialelor vizuale (capturi de ecran atrăgătoare) pentru lansarea paginii de Steam și începerea campaniei de Wishlist.
