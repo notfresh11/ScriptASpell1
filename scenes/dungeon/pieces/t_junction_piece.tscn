@@ -112,3 +112,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.31355548, -4.172325e-07, 4
 
 [node name="wall3" parent="." unique_id=862178551 instance=ExtResource("2_5i8jg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9962234, -4.172325e-07, 4.525076)
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+
+[node name="Exit_East" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 5, 0, 0)
+
+[node name="Exit_West" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -5, 0, 0)

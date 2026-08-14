@@ -234,7 +234,7 @@ Această secțiune este de importanță critică pentru orice Agent AI care acce
 4.  **Fizica Haotică:** Pentru mecanicile bouncy și ragdoll, utilizează corect nodurile de fizică din Godot 4 (`CharacterBody3D` pentru mișcare controlată, `RigidBody3D` pentru obiecte aruncate, comori și simulări complet fizice).
 
 ### B. Protocolul de Memorare și Feedback (Avoiding Double Mistakes)
-Pentru a asigura că Agentul își amintește preferințele utilizatorului și deciziile arhitecturale dintr-o sesiune în alta:
+Pentru a asigura că Agentul își amintește preferințele utilizatorului și deciziile arhITECTURALE dintr-o sesiune în alta:
 1.  **Actualizare după Feedback:** De fiecare dată când utilizatorul respinge o propunere, indică o eroare de design sau cere o modificare de logică, Agentul **este obligat** să adauge acea regulă sau constrângere în capitolul `C. Lessons Learned / Known Constraints` de mai jos.
 2.  **Consultare la Început de Sesiune:** La începerea oricărei sesiuni de lucru sau înainte de a scrie cod, Agentul va citi în întregime secțiunea 10 pentru a se asigura că nu repetă greșelile din trecut.
 
@@ -246,7 +246,7 @@ Pentru a asigura că Agentul își amintește preferințele utilizatorului și d
 *   **Regula LL-03 (Language Boundary):** Documentul `agents.md` și comunicarea cu utilizatorul se vor desfășura în **limba română**, păstrând însă termenii tehnici consacrați în limba engleză (ex: *multiplayer, RPC, authority, ragdoll, debugging, loop, syntax, runtime, etc.*) pentru a menține precizia profesională.
 *   **Regula LL-04 (Multiplayer Spawner Names):** Atunci când instanțiem scene dinamice în rețea care sunt replicate prin `MultiplayerSpawner`, adăugarea lor în arborele de scene trebuie făcută exclusiv prin `add_child(node, true)`. Argumentul `true` forțează generarea de nume vizibile și valide în rețea (evitând caracterele speciale precum `@` din `@RigidBody3D@105`), lucru esențial pentru ca auto-spawn-ul să funcționeze corect fără erori de rețea.
 *   **Regula LL-05 (Mouse Filter & Input Event):** Pentru a preveni ca elementele din HUD sau alte panouri de control 2D să blocheze rotația camerei sau mișcarea mouse-ului, rotația trebuie procesată în funcția `_input(event)` (nu în `_unhandled_input(event)`). De asemenea, toate elementele UI de tip `Control` trebuie configurate cu `mouse_filter = MOUSE_FILTER_IGNORE` (`2`) dacă nu necesită interacțiune directă cu mouse-ul.
-*   **Regula LL-06 (Dungeon Grid Alignment):** Toate piesele modulare de dungeon trebuie modelate pe un grid pătrat matematic fix de exact `10x10` metri, cu originea locală la `(0, 0, 0)`. Această scală exterioară este obligatorie pentru a asigura îmbinarea perfectă fără spații/goluri (void) sau suprapuneri, indiferent de cât de înguste sau întortocheate sunt coridoarele din interiorul piesei.
+*   **Regula LL-06 (Dungeon Socket Alignment & Dynamic Marker3D Inspection):** Generarea procedurală a dungeon-ului folosește ancorare pe noduri/socket-uri (`Marker3D`). Algoritmul inspectează dinamic nodurile `Marker3D` existente la runtime pe piesa instanțiată. Dacă un utilizator șterge un `Marker3D` din editor (deoarece acea ieșire se află într-un perete), algoritmul o va ignora automat și nu va încerca să plaseze piese pe acea direcție.
 *   **Regula LL-07 (TSCN UID Warning Removal):** Pentru a asigura compatibilitatea și eliminarea warning-urilor 'invalid UID' la partajarea fișierelor de scenă, se vor șterge atributele `uid` din elementele `[ext_resource]` ale fișierelor `.tscn` modificate manual.
 
 ---
@@ -373,7 +373,7 @@ Proiectul are acum un Game Loop complet funcțional în stil *Lethal Company*, o
 *   **Rezolvarea:** Am implementat o funcție RPC suplimentară de teleportare securizată numită `teleport_to(target_pos: Vector3)` pe clienți. Serverul identifică acum peer-ul care a solicitat teleportarea, iar în loc să-i forțeze poziția direct, trimite un apel `rpc_id` către acel client specific (dacă este client conectat) sau aplică poziția local direct (dacă este Host-ul/Serverul local). Clientul își setează astfel local noua poziție, iar `MultiplayerSynchronizer` o propagă de jos în sus, garantând o teleportare sigură și bidirecțională (intrare/ieșire din dungeon) fără pierderi de pachete.
 
 ##### 3. Generare Dublă a Dungeon-ului și Suprapunere de Caractere (Double-Spawning)
-*   **Problema:** Deoarece `DungeonGenerator` a fost instanțiat ca un copil static în scena `map1.tscn`, funcția sa de `_ready()` rula automat în paralel cu `map1.gd`. Ambele scripturi încercau să genereze dungeon-ul procedural și să spawneze jucătorii în același timp. Acest lucru cauza generarea a două structuri suprapuse ("platforme unele peste altele"), overlap-ul a două interfețe HUD (care producea flicker și bug-uri vizuale pe textul de holding/active item), precum și duplicarea nodurilor de jucători.
+*   **Problema:** Deoarece `DungeonGenerator` a fost instanțiat ca un copil static în scena `map1.tscn`, funcția sa de `_ready()` rula automat în paralel cu `map1.gd`. Ambele scripturi încercau să genereze dungeon-ul procedural și să spawneze jucătorii în același timp. Acest lucru cauza generarea a două structuri suprapuse ("platforme unele peste altele"), overlap-ul a două interfețe HUD (care producea flicker și bug-uri visuale pe textul de holding/active item), precum și duplicarea nodurilor de jucători.
 *   **Rezolvarea:** Am adăugat un filtru în `dungeon_generator.gd`'s `_ready()`. Acesta verifică dacă generatorul rulează ca scenă principală de sine stătătoare (în modul de testare/offline) sau ca parte din `Map1`. Dacă este copil în `Map1`, generatorul își distruge UI-ul CanvasLayer local suprapus și deleagă în întregime inițializarea, generarea unică și spawnarea corectă a jucătorilor către scriptul părinte `map1.gd`.
 
 ##### 4. Teleportarea Eronată și Pierderea Obiectelor Aruncate (Loot Drop Bug)
@@ -453,6 +453,20 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 ##### 3. Avertismente de 'invalid UID' pe scenele modificate
 *   **Problema:** Copierea UID-urilor unice generate în medii locale în fișierele `.tscn` trimise a aruncat erori de UID invalid la pornirea motorului.
 *   **Rezolvarea:** S-au eliminat atributele `uid="..."` din resursele externe încărcate în scene, permițând Godot să le încarce curat direct pe baza căii lor text.
+
+---
+
+### SESIUNEA 6: Trecere la Generarea Procedurală Bazată pe Socket-uri (Marker3D / Transform Matching)
+
+#### A. Ce s-a realizat în această sesiune (Project State)
+1. **Piese Modulare Ancorate prin Marker3D:**
+   - Toate cele 7 piese modulare (`entrance`, `hallway`, `corner`, `t_junction`, `four_way`, `room`, `dead_end`) includ un nod părinte `Exits` ce conține nodurile `Marker3D` de ieșire (`Exit_North`, `Exit_East`, `Exit_South`, `Exit_West`).
+2. **Inspecție Dinamică pe Marker3D:**
+   - Algoritmul din `dungeon_generator.gd` inspectează la runtime dinamic nodurile `Marker3D` existente în arborele piesei.
+   - Dacă utilizatorul deschide o piesă în editor și șterge un `Marker3D` (deoarece acea ieșire dă intr-un perete sau dorește blocarea ei), algoritmul va detecta automat modificarea și nu va încerca să plaseze piese prin acea ieșire.
+3. **Ancorare Fizică prin Transform Matching:**
+   - Instanțierea unei piese noi se face prin potrivirea global transform-ului (`global_transform`) pe Marker3D-ul piesei părinte.
+   - Ieșirile libere neconectate sau blocate de suprapuneri se sigilează automat cu piese `Dead End` ancorate în mod similar.
 
 ---
 

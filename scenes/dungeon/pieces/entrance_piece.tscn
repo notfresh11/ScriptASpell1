@@ -161,3 +161,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5066419, 0.0073717237, -4.5
 
 [node name="wall_half4" parent="." unique_id=990081990 instance=ExtResource("6_rwgkf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8394542, 0.0073717237, -4.5256076)
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
