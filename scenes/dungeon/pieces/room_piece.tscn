@@ -112,3 +112,11 @@ transform = Transform3D(0.8669542, -0.49833044, 0.0075612497, 0.4983878, 0.86685
 
 [node name="torch_mounted2" parent="." unique_id=762685046 instance=ExtResource("6_kmmm4")]
 transform = Transform3D(0.8669542, -0.49833044, 0.0075612497, 0.4983878, 0.8668544, -0.013152924, 0, 0.015171418, 0.9998849, 3.6867132, 2.1282604, 1.1818516)
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+
+[node name="Exit_South" type="Marker3D" parent="Exits"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 5)

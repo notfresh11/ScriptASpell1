@@ -19,459 +19,204 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 @onready var loot_node: Node3D = $Loot
 @onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 
-# Grid stocare piese: { Vector2i(x, y): { "path": String, "rotation_steps": int, "ports": Array, "type": String, "instance": Node3D } }
-var grid: Dictionary = {}
+# Piese instanțiate
+var spawned_pieces: Array[Node3D] = []
 
 func _ready() -> void:
-	# Verificăm dacă suntem scena principală sau un copil în Map1
 	if get_parent() == get_tree().root:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		back_button.pressed.connect(_on_back_pressed)
 
 		if multiplayer.is_server():
-			# Generăm structura hărții exclusiv pe server
 			generate_dungeon()
-
-			# Așteptăm un moment scurt pentru propagarea datelor pe rețea, apoi spawnăm jucătorii
 			await get_tree().create_timer(0.2).timeout
 			spawn_all_players()
 	else:
-		# Suntem copil în Map1, deci Map1 se ocupă de inițializare, spawn playeri și UI.
-		# Dezactivăm CanvasLayer-ul de UI propriu ca să nu se suprapună cu cel din Map1.
 		if has_node("CanvasLayer"):
 			$CanvasLayer.queue_free()
 
-# --- DETECTOR DIRECȚII ---
-func get_dir_vector(dir: int) -> Vector2i:
-	match dir:
-		0: return Vector2i(0, -1) # North
-		1: return Vector2i(1, 0)  # East
-		2: return Vector2i(0, 1)  # South
-		3: return Vector2i(-1, 0) # West
-	return Vector2i.ZERO
+# --- DETECTARE DINAMICĂ MARKER3D (SOCKET-URI) ---
+# Inspectează dinamic nodul "Exits" sau copiii de tip Marker3D ai piesei.
+# Dacă un utilizator șterge un Marker3D din editor (deoarece ieșirea era în perete),
+# acesta nu va mai fi găsit în lista de ieșiri active!
+func get_piece_exit_markers(piece_instance: Node3D) -> Array[Marker3D]:
+	var markers: Array[Marker3D] = []
 
-func get_direction_to(from_cell: Vector2i, to_cell: Vector2i) -> int:
-	var diff = to_cell - from_cell
-	if diff == Vector2i(0, -1): return 0 # North
-	if diff == Vector2i(1, 0): return 1  # East
-	if diff == Vector2i(0, 1): return 2  # South
-	if diff == Vector2i(-1, 0): return 3 # West
-	return -1
+	var exits_container = piece_instance.get_node_or_null("Exits")
+	if exits_container:
+		for child in exits_container.get_children():
+			if child is Marker3D:
+				markers.append(child as Marker3D)
+	else:
+		for child in piece_instance.get_children():
+			if child is Marker3D:
+				markers.append(child as Marker3D)
 
-func rotate_ports_array(base_ports: Array, steps: int) -> Array:
-	var rotated = [false, false, false, false]
-	for i in range(4):
-		rotated[(i + steps) % 4] = base_ports[i]
-	return rotated
+	return markers
 
-# --- CĂUTARE ȘI CONSTRUIRE CALE PRINCIPALA ---
-func find_main_path_coords(target_length: int) -> Array:
-	var path = [Vector2i(0, 0), Vector2i(0, -1)]
-
-	# Încercare 1: Strictă (fără coridoare care se ating singure, pentru a asigura bucle curate)
-	if _dfs_path(path, target_length, 0):
-		return path
-
-	# Încercare 2: Relaxată (permite până la 1 punct de atingere pentru flexibilitate)
-	path = [Vector2i(0, 0), Vector2i(0, -1)]
-	if _dfs_path(path, target_length, 1):
-		return path
-
-	# Încercare 3: Foarte relaxată (permite mai multe puncte de atingere ca fallback de siguranță)
-	path = [Vector2i(0, 0), Vector2i(0, -1)]
-	if _dfs_path(path, target_length, 4):
-		return path
-
-	return path
-
-func _dfs_path(path: Array, target_length: int, max_touches: int) -> bool:
-	if path.size() == target_length:
-		return true
-
-	var curr = path[-1]
-	var directions = [0, 1, 2, 3]
-	directions.shuffle()
-
-	for dir in directions:
-		var next_cell = curr + get_dir_vector(dir)
-		if next_cell in path:
-			continue
-
-		var touch_count = 0
-		for d in range(4):
-			var n = next_cell + get_dir_vector(d)
-			if n in path and n != curr:
-				touch_count += 1
-
-		if touch_count > max_touches:
-			continue
-
-		path.append(next_cell)
-		if _dfs_path(path, target_length, max_touches):
+# Verificare suprapunere fizică (Overlap Check):
+# Căutăm dacă centrul piesei noi este prea aproape de piesele existente
+func check_piece_overlap(new_pos: Vector3) -> bool:
+	for existing in spawned_pieces:
+		if new_pos.distance_to(existing.global_position) < 7.0:
 			return true
-		path.pop_back()
-
 	return false
 
-# --- GĂSIRE COMPATIBILITATE SPECIFICĂ PENTRU CALEA PRINCIPALĂ ---
-func get_valid_main_path_pieces(incoming_dir: int, outgoing_dir: int) -> Array:
-	var candidates = []
-
-	var pool = [
-		{"path": HALLWAY_SCENE.resource_path, "base_ports": [true, false, true, false], "type": "hallway"},
-		{"path": CORNER_SCENE.resource_path, "base_ports": [true, true, false, false], "type": "corner"},
-		{"path": T_JUNCTION_SCENE.resource_path, "base_ports": [true, true, false, true], "type": "t_junction"},
-		{"path": FOUR_WAY_SCENE.resource_path, "base_ports": [true, true, true, true], "type": "four_way"},
-		{"path": ROOM_SCENE.resource_path, "base_ports": [true, false, true, false], "type": "room"}
-	]
-
-	for item in pool:
-		for rot_steps in range(4):
-			var rotated_ports: Array = rotate_ports_array(item["base_ports"], rot_steps)
-			if rotated_ports[incoming_dir] and rotated_ports[outgoing_dir]:
-				candidates.append({
-					"path": item["path"],
-					"rotation_steps": rot_steps,
-					"ports": rotated_ports,
-					"type": item["type"]
-				})
-
-	return candidates
-
-func choose_main_path_piece(candidates: Array, depth_ratio: float) -> Dictionary:
-	if candidates.is_empty():
-		return {}
-
-	# Definim ponderi specifice tipurilor de piese în funcție de adâncimea curentă
-	var weights = {}
-	if depth_ratio < 0.3:
-		# Early depth: Focus puternic pe coridoare atmosferice
-		weights = {
-			"hallway": 55.0,
-			"corner": 35.0,
-			"t_junction": 5.0,
-			"four_way": 2.0,
-			"room": 3.0
-		}
-	elif depth_ratio < 0.7:
-		# Mid depth: Introducem intersecții și primele camere comune de loot
-		weights = {
-			"hallway": 20.0,
-			"corner": 20.0,
-			"t_junction": 25.0,
-			"four_way": 10.0,
-			"room": 25.0
-		}
-	else:
-		# Deep depth: Camere mari de loot abundent și intersecții majore
-		weights = {
-			"hallway": 10.0,
-			"corner": 10.0,
-			"t_junction": 20.0,
-			"four_way": 15.0,
-			"room": 45.0
-		}
-
-	var total_weight = 0.0
-	var candidate_weights = []
-	for cand in candidates:
-		var w = weights.get(cand["type"], 10.0)
-		candidate_weights.append(w)
-		total_weight += w
-
-	var roll = randf() * total_weight
-	var current_sum = 0.0
-	for j in range(candidates.size()):
-		current_sum += candidate_weights[j]
-		if roll <= current_sum:
-			return candidates[j]
-
-	return candidates[0]
-
-func get_valid_end_pieces(incoming_dir: int) -> Array:
-	var candidates = []
-	var pool = [
-		{"path": ROOM_SCENE.resource_path, "base_ports": [true, false, true, false], "type": "room"},
-		{"path": FOUR_WAY_SCENE.resource_path, "base_ports": [true, true, true, true], "type": "four_way"},
-		{"path": T_JUNCTION_SCENE.resource_path, "base_ports": [true, true, false, true], "type": "t_junction"},
-		{"path": HALLWAY_SCENE.resource_path, "base_ports": [true, false, true, false], "type": "hallway"},
-		{"path": CORNER_SCENE.resource_path, "base_ports": [true, true, false, false], "type": "corner"}
-	]
-
-	for item in pool:
-		for rot_steps in range(4):
-			var rotated_ports: Array = rotate_ports_array(item["base_ports"], rot_steps)
-			if rotated_ports[incoming_dir]:
-				candidates.append({
-					"path": item["path"],
-					"rotation_steps": rot_steps,
-					"ports": rotated_ports,
-					"type": item["type"]
-				})
-
-	return candidates
-
-func choose_end_piece(candidates: Array) -> Dictionary:
-	if candidates.is_empty():
-		return {}
-
-	# Camera de la finalul drumului principal ar trebui să fie una mare (Room sau FourWay)
-	var weights = {
-		"room": 70.0,
-		"four_way": 20.0,
-		"t_junction": 10.0,
-		"hallway": 0.0,
-		"corner": 0.0
-	}
-
-	var total_weight = 0.0
-	var candidate_weights = []
-	for cand in candidates:
-		var w = weights.get(cand["type"], 5.0)
-		candidate_weights.append(w)
-		total_weight += w
-
-	var roll = randf() * total_weight
-	var current_sum = 0.0
-	for j in range(candidates.size()):
-		current_sum += candidate_weights[j]
-		if roll <= current_sum:
-			return candidates[j]
-
-	return candidates[0]
-
-# --- CHOOSE BRANCH PIECES ---
-func choose_branch_piece(candidates: Array) -> Dictionary:
-	if candidates.is_empty():
-		return {}
-
-	var weights = {
-		"room": 50.0,
-		"hallway": 20.0,
-		"corner": 20.0,
-		"t_junction": 10.0,
-		"four_way": 0.0
-	}
-
-	var total_weight = 0.0
-	var candidate_weights = []
-	for cand in candidates:
-		var w = weights.get(cand["type"], 10.0)
-		candidate_weights.append(w)
-		total_weight += w
-
-	var roll = randf() * total_weight
-	var current_sum = 0.0
-	for j in range(candidates.size()):
-		current_sum += candidate_weights[j]
-		if roll <= current_sum:
-			return candidates[j]
-
-	return candidates[0]
-
-# --- ALGORITMUL DE GENERARE PROCEDURALĂ ---
+# --- ALGORITMUL DE GENERARE PROCEDURALĂ BAZAT PE SOCKET-URI ---
 func generate_dungeon() -> void:
-	print("Începe generarea procedurală a dungeon-ului...")
+	print("Începe generarea procedurală a dungeon-ului (Sistem bazat pe Socket-uri / Marker3D)...")
 
-	# 1. Generăm coordonatele căii principale (aproximativ 18 piese pe axa de progresie)
-	var main_path_length: int = 18
-	var path_coords = find_main_path_coords(main_path_length)
-	if path_coords.is_empty():
-		print("Eroare critică: Calea principală nu a putut fi calculată. Fallback de urgență...")
-		path_coords = [Vector2i(0, 0), Vector2i(0, -1)]
-		main_path_length = path_coords.size()
+	spawned_pieces.clear()
 
-	# 2. Plasăm piesa de intrare la (0, 0) cu rotație 0 (deschisă doar spre Nord)
+	# Coadă pentru ieșiri deschise (Open Exits Queue)
+	# Element: { "global_transform": Transform3D, "depth": int }
+	var open_exits: Array[Dictionary] = []
+
+	# 1. Instanțiem Piesa de Intrare (Entrance) la originea dungeon-ului (0, 0, 0)
 	var entrance_instance: Node3D = ENTRANCE_SCENE.instantiate()
-	entrance_instance.name = "Piece_0_0"
-	entrance_instance.position = Vector3(0, 0, 0)
+	entrance_instance.name = "Piece_Entrance"
+	entrance_instance.transform = Transform3D.IDENTITY
 	pieces_node.add_child(entrance_instance, true)
+	spawned_pieces.append(entrance_instance)
 
-	grid[Vector2i(0, 0)] = {
-		"path": ENTRANCE_SCENE.resource_path,
-		"rotation_steps": 0,
-		"ports": [true, false, false, false],
-		"type": "entrance",
-		"instance": entrance_instance
-	}
+	# Extragere ieșiri disponibile de pe Piesa de Intrare
+	for marker in get_piece_exit_markers(entrance_instance):
+		var marker_global_transform = entrance_instance.global_transform * marker.transform
+		open_exits.append({
+			"global_transform": marker_global_transform,
+			"depth": 1
+		})
 
-	# 3. Plasăm piesele intermediare de pe calea principală
-	for i in range(1, path_coords.size() - 1):
-		var cell = path_coords[i]
-		var incoming_dir = get_direction_to(cell, path_coords[i-1])
-		var outgoing_dir = get_direction_to(cell, path_coords[i+1])
+	# Pool-ul de piese disponibile pentru construcție
+	var normal_pieces = [
+		HALLWAY_SCENE,
+		CORNER_SCENE,
+		T_JUNCTION_SCENE,
+		FOUR_WAY_SCENE,
+		ROOM_SCENE
+	]
 
-		var depth_ratio = float(i) / float(path_coords.size())
-		var candidates = get_valid_main_path_pieces(incoming_dir, outgoing_dir)
-		var chosen = choose_main_path_piece(candidates, depth_ratio)
+	# 2. Procesăm coada de ieșiri deschise (Open Exits Queue)
+	while not open_exits.is_empty() and spawned_pieces.size() < max_main_pieces:
+		var current_exit = open_exits.pop_front()
+		var parent_exit_transform: Transform3D = current_exit["global_transform"]
+		var parent_exit_pos: Vector3 = parent_exit_transform.origin
+		var parent_exit_dir: Vector3 = -parent_exit_transform.basis.z.normalized()
+		var depth: int = current_exit["depth"]
 
-		var piece_scene: PackedScene = load(chosen["path"])
-		var piece_instance: Node3D = piece_scene.instantiate()
+		normal_pieces.shuffle()
+		var piece_placed = false
 
-		piece_instance.name = "Piece_%d_%d" % [cell.x, cell.y]
-		# FIX REPLICARE MULTIPLAYER: Setăm poziția și rotația ÎNAINTE de add_child() ca MultiplayerSpawner să le trimită corect clienților!
-		piece_instance.position = Vector3(cell.x * 10.0, 0.0, cell.y * 10.0)
-		piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
+		for scene in normal_pieces:
+			var candidate_instance: Node3D = scene.instantiate()
+			var candidate_sockets = get_piece_exit_markers(candidate_instance)
 
-		pieces_node.add_child(piece_instance, true)
+			if candidate_sockets.is_empty():
+				candidate_instance.queue_free()
+				continue
 
-		grid[cell] = {
-			"path": chosen["path"],
-			"rotation_steps": chosen["rotation_steps"],
-			"ports": chosen["ports"],
-			"type": chosen["type"],
-			"instance": piece_instance
-		}
+			candidate_sockets.shuffle()
 
-	# 4. Plasăm piesa finală a căii principale (O cameră sau intersecție mare de destinație)
-	if path_coords.size() > 1:
-		var last_index = path_coords.size() - 1
-		var cell = path_coords[last_index]
-		var incoming_dir = get_direction_to(cell, path_coords[last_index - 1])
+			# Încercăm potrivirea pe fiecare socket de intrare posibil al piese de testat
+			for s_in in candidate_sockets:
+				var target_dir = -parent_exit_dir
+				var local_dir = -s_in.transform.basis.z.normalized()
 
-		var candidates = get_valid_end_pieces(incoming_dir)
-		var chosen = choose_end_piece(candidates)
+				var angle = Vector2(local_dir.x, local_dir.z).angle_to(Vector2(target_dir.x, target_dir.z))
+				var child_basis = Basis(Vector3.UP, angle)
+				var child_pos = parent_exit_pos - child_basis * s_in.position
 
-		var piece_scene: PackedScene = load(chosen["path"])
-		var piece_instance: Node3D = piece_scene.instantiate()
+				if check_piece_overlap(child_pos):
+					continue
 
-		piece_instance.name = "Piece_%d_%d_End" % [cell.x, cell.y]
-		piece_instance.position = Vector3(cell.x * 10.0, 0.0, cell.y * 10.0)
-		piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
+				# Piesa se potrivește perfect fără suprapunere!
+				candidate_instance.name = "Piece_%d" % spawned_pieces.size()
+				candidate_instance.position = child_pos
+				candidate_instance.basis = child_basis
 
-		pieces_node.add_child(piece_instance, true)
+				# Adăugăm piesa cu transformarea deja setată corect pentru sincronizare în rețea
+				pieces_node.add_child(candidate_instance, true)
+				spawned_pieces.append(candidate_instance)
+				piece_placed = true
 
-		grid[cell] = {
-			"path": chosen["path"],
-			"rotation_steps": chosen["rotation_steps"],
-			"ports": chosen["ports"],
-			"type": chosen["type"],
-			"instance": piece_instance
-		}
-
-	# 5. Generăm ramificațiile secundare (Side Branches) din porturile rămase deschise ale căii principale
-	var branch_queue: Array = []
-	for cell in grid:
-		if grid[cell]["type"] == "entrance" or grid[cell]["type"] == "dead_end":
-			continue
-		for dir in range(4):
-			if grid[cell]["ports"][dir]:
-				var neighbor_cell = cell + get_dir_vector(dir)
-				if not neighbor_cell in grid:
-					branch_queue.append({
-						"from": cell,
-						"to": neighbor_cell,
-						"depth": 1
+				# Înregistrăm restul de ieșiri deschise ale piesei proaspăt plasate
+				for s_out in candidate_sockets:
+					if s_out == s_in:
+						continue
+					var s_out_global_basis = child_basis * s_out.transform.basis
+					var s_out_global_pos = child_pos + child_basis * s_out.position
+					var s_out_global_transform = Transform3D(s_out_global_basis, s_out_global_pos)
+					open_exits.append({
+						"global_transform": s_out_global_transform,
+						"depth": depth + 1
 					})
+				break
 
-	# Amestecăm porturile de pornire pentru a asigura distribuție ne-liniară a ramificațiilor
-	branch_queue.shuffle()
+			if piece_placed:
+				break
+			else:
+				candidate_instance.queue_free()
 
-	# Adâncimea maximă a ramificațiilor secundare (1-2 piese max, generând layout tip Pilgrim / Kletka)
-	var max_branch_depth = 2
-	while branch_queue.size() > 0 and grid.size() < max_main_pieces:
-		var conn = branch_queue.pop_front()
-		var target_cell: Vector2i = conn["to"]
-		var depth = conn["depth"]
+		# Dacă nicio piesă normală nu s-a putut potrivi pe ieșire, sigilăm cu Dead End
+		if not piece_placed:
+			_seal_exit_with_dead_end(parent_exit_transform)
 
-		if target_cell in grid:
-			continue
+	# 3. Sigilăm toate ieșirile rămase neconectate în coadă cu piese Dead End
+	for remaining in open_exits:
+		var parent_exit_transform: Transform3D = remaining["global_transform"]
+		_seal_exit_with_dead_end(parent_exit_transform)
 
-		var candidates = get_valid_pieces_for(target_cell)
-		if candidates.is_empty():
-			continue # Fără potrivire validă pentru această celulă
-
-		var chosen = choose_branch_piece(candidates)
-		var piece_scene: PackedScene = load(chosen["path"])
-		var piece_instance: Node3D = piece_scene.instantiate()
-
-		piece_instance.name = "Piece_%d_%d_Branch" % [target_cell.x, target_cell.y]
-		# FIX REPLICARE MULTIPLAYER: Setăm poziția și rotația ÎNAINTE de add_child() ca MultiplayerSpawner să le trimită corect clienților!
-		piece_instance.position = Vector3(target_cell.x * 10.0, 0.0, target_cell.y * 10.0)
-		piece_instance.rotation_degrees.y = -chosen["rotation_steps"] * 90.0
-
-		pieces_node.add_child(piece_instance, true)
-
-		grid[target_cell] = {
-			"path": chosen["path"],
-			"rotation_steps": chosen["rotation_steps"],
-			"ports": chosen["ports"],
-			"type": chosen["type"],
-			"instance": piece_instance
-		}
-
-		# Adăugăm noile ieșiri deschise ale piesei în coada de ramificație (dacă nu am atins adâncimea maximă a ramurii)
-		if depth < max_branch_depth:
-			for dir in range(4):
-				if chosen["ports"][dir]:
-					var neighbor_cell: Vector2i = target_cell + get_dir_vector(dir)
-					if not neighbor_cell in grid:
-						branch_queue.append({
-							"from": target_cell,
-							"to": neighbor_cell,
-							"depth": depth + 1
-						})
-
-	# 6. Sigilarea hărții: punem Dead Ends în toate porturile rămase deschise către celule goale
-	var open_connections_to_seal: Array = []
-	for cell in grid:
-		var info = grid[cell]
-		for dir in range(4):
-			if info["ports"][dir]:
-				var neighbor_cell: Vector2i = cell + get_dir_vector(dir)
-				if not neighbor_cell in grid:
-					open_connections_to_seal.append({
-						"from": cell,
-						"to": neighbor_cell,
-						"from_dir": dir
-					})
-
-	for conn in open_connections_to_seal:
-		var target_cell: Vector2i = conn["to"]
-		if target_cell in grid:
-			continue
-
-		var rot_steps: int = conn["from_dir"]
-
-		var dead_end_instance: Node3D = DEAD_END_SCENE.instantiate()
-		dead_end_instance.name = "Piece_%d_%d_Sealed" % [target_cell.x, target_cell.y]
-		# FIX REPLICARE MULTIPLAYER: Setăm poziția și rotația ÎNAINTE de add_child() ca MultiplayerSpawner să le trimită corect clienților!
-		dead_end_instance.position = Vector3(target_cell.x * 10.0, 0.0, target_cell.y * 10.0)
-		dead_end_instance.rotation_degrees.y = -rot_steps * 90.0
-
-		pieces_node.add_child(dead_end_instance, true)
-
-		grid[target_cell] = {
-			"path": DEAD_END_SCENE.resource_path,
-			"rotation_steps": rot_steps,
-			"ports": rotate_ports_array([false, false, true, false], rot_steps),
-			"type": "dead_end",
-			"instance": dead_end_instance
-		}
-
-	print("Dungeon generat cu succes! Total piese: ", grid.size())
+	print("Dungeon generat cu succes! Total piese plasate pe socket-uri: ", spawned_pieces.size())
 
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
 
+# Sigilare fizică pe nodul Marker3D cu verificare de suprapunere:
+func _seal_exit_with_dead_end(parent_exit_transform: Transform3D) -> void:
+	var dead_end_instance: Node3D = DEAD_END_SCENE.instantiate()
+	var sockets = get_piece_exit_markers(dead_end_instance)
+
+	if sockets.is_empty():
+		dead_end_instance.queue_free()
+		return
+
+	var s_in = sockets[0]
+	var parent_exit_pos: Vector3 = parent_exit_transform.origin
+	var parent_exit_dir: Vector3 = -parent_exit_transform.basis.z.normalized()
+
+	var target_dir = -parent_exit_dir
+	var local_dir = -s_in.transform.basis.z.normalized()
+
+	var angle = Vector2(local_dir.x, local_dir.z).angle_to(Vector2(target_dir.x, target_dir.z))
+	var child_basis = Basis(Vector3.UP, angle)
+	var child_pos = parent_exit_pos - child_basis * s_in.position
+
+	if check_piece_overlap(child_pos):
+		dead_end_instance.queue_free()
+		return
+
+	dead_end_instance.name = "Piece_DeadEnd_%d" % spawned_pieces.size()
+	dead_end_instance.position = child_pos
+	dead_end_instance.basis = child_basis
+
+	pieces_node.add_child(dead_end_instance, true)
+	spawned_pieces.append(dead_end_instance)
+
 # --- SPAWNING LOOT PROCEDURAL ---
 func spawn_dungeon_loot() -> void:
-	print("Se spawnează loot în camere...")
-	for cell in grid:
-		var info = grid[cell]
-		if info["type"] == "entrance" or info["type"] == "dead_end":
+	print("Se spawnează loot în piese...")
+	for piece in spawned_pieces:
+		if piece.name.contains("Entrance") or piece.name.contains("DeadEnd"):
 			continue
 
-		var center_pos = Vector3(cell.x * 10.0, 0.5, cell.y * 10.0)
+		var center_pos = piece.global_position + Vector3(0, 0.5, 0)
 
-		if info["type"] == "room":
-			# Spawnează între 1 și 3 iteme în camere mari
+		if piece.name.contains("Room") or piece.scene_file_path.contains("room"):
 			var count = randi_range(1, 3)
 			for j in range(count):
 				spawn_loot_at(center_pos)
 		else:
-			# 20% șansă de spawn în coridoare/intersecții
-			if randf() < 0.2:
+			if randf() < 0.25:
 				spawn_loot_at(center_pos)
 
 func spawn_loot_at(pos: Vector3) -> void:
@@ -482,95 +227,38 @@ func spawn_loot_at(pos: Vector3) -> void:
 	var rarity_roll = randf()
 	var rarity = "common"
 	var price = 15
-	var color = Color(0.5, 0.5, 0.5, 1) # Grey
+	var color = Color(0.5, 0.5, 0.5, 1)
 
 	if rarity_roll < 0.05:
 		rarity = "epic"
 		price = randi_range(75, 100)
-		color = Color(0.6, 0.1, 0.8, 1) # Purple
+		color = Color(0.6, 0.1, 0.8, 1)
 	elif rarity_roll < 0.20:
 		rarity = "rare"
 		price = randi_range(50, 75)
-		color = Color(0.9, 0.8, 0.1, 1) # Yellow
+		color = Color(0.9, 0.8, 0.1, 1)
 	elif rarity_roll < 0.50:
 		rarity = "uncommon"
 		price = randi_range(30, 50)
-		color = Color(0.1, 0.7, 0.2, 1) # Green
+		color = Color(0.1, 0.7, 0.2, 1)
 	else:
 		rarity = "common"
 		price = randi_range(10, 30)
-		color = Color(0.5, 0.5, 0.5, 1) # Grey
+		color = Color(0.5, 0.5, 0.5, 1)
 
 	var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
 
-	# Setăm poziția înainte de add_child
-	loot_instance.position = pos + Vector3(randf_range(-1.5, 1.5), 0.5, randf_range(-1.5, 1.5))
+	loot_instance.position = pos + Vector3(randf_range(-1.0, 1.0), 0.5, randf_range(-1.0, 1.0))
 	loot_node.add_child(loot_instance, true)
-
-	# Inițializăm proprietățile sincronizate prin rețea
 	loot_instance.init_loot(unique_id, rarity, price, color)
-
-# --- GĂSIREA CANDIDAȚILOR COMPATIBILI (CONSTRÂNGERI ADIACENTE) ---
-func get_valid_pieces_for(cell: Vector2i) -> Array:
-	var candidates: Array = []
-
-	# Constrângeri pe cele 4 direcții:
-	# 1 = MUST_HAVE_PORT, -1 = MUST_NOT_HAVE_PORT, 0 = OPTIONAL
-	var constraints = [0, 0, 0, 0]
-
-	for dir in range(4):
-		var neighbor_cell: Vector2i = cell + get_dir_vector(dir)
-		if neighbor_cell in grid:
-			var neighbor = grid[neighbor_cell]
-			var neighbor_opp_port: int = (dir + 2) % 4
-			if neighbor["ports"][neighbor_opp_port]:
-				constraints[dir] = 1
-			else:
-				constraints[dir] = -1
-		else:
-			constraints[dir] = 0
-
-	# Toate piesele din pool care pot fi plasate (excluzând Entrance și DeadEnd din pool-ul generat direct)
-	var pool = [
-		{"path": HALLWAY_SCENE.resource_path, "base_ports": [true, false, true, false], "type": "hallway"},
-		{"path": CORNER_SCENE.resource_path, "base_ports": [true, true, false, false], "type": "corner"},
-		{"path": T_JUNCTION_SCENE.resource_path, "base_ports": [true, true, false, true], "type": "t_junction"},
-		{"path": FOUR_WAY_SCENE.resource_path, "base_ports": [true, true, true, true], "type": "four_way"},
-		{"path": ROOM_SCENE.resource_path, "base_ports": [true, false, true, false], "type": "room"}
-	]
-
-	for item in pool:
-		for rot_steps in range(4):
-			var rotated_ports: Array = rotate_ports_array(item["base_ports"], rot_steps)
-
-			var is_valid: bool = true
-			for dir in range(4):
-				if constraints[dir] == 1 and not rotated_ports[dir]:
-					is_valid = false
-					break
-				if constraints[dir] == -1 and rotated_ports[dir]:
-					is_valid = false
-					break
-
-			if is_valid:
-				candidates.append({
-					"path": item["path"],
-					"rotation_steps": rot_steps,
-					"ports": rotated_ports,
-					"type": item["type"]
-				})
-
-	return candidates
 
 # --- SPAWNING MULTIPLAYER PLAYERS ---
 func spawn_all_players() -> void:
-	# Spawnăm fiecare player conectat la poziția (0, 1.0, 0) - centrul intrării
 	for player_id in NetworkManager.players:
 		var player_instance = player_scene.instantiate()
 		player_instance.name = str(player_id)
 		player_instance.player_id = player_id
 
-		# FIX REPLICARE MULTIPLAYER: Adăugăm jucătorul în arbore și setăm poziția corect
 		players_node.add_child(player_instance)
 		player_instance.global_position = Vector3(0.0, 1.0, 0.0)
 
