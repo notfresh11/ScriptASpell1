@@ -10,49 +10,49 @@ roughness = 0.8
 albedo_color = Color(0.15, 0.15, 0.18, 1)
 roughness = 0.9
 
-[node name="StairsStraightPiece" type="Node3D"]
+[node name="StairsStraightPiece" type="Node3D" unique_id=1827643933]
 
-[node name="Floor_Lower" type="CSGBox3D" parent="."]
+[node name="Floor_Lower" type="CSGBox3D" parent="." unique_id=864275218]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 3.5)
 use_collision = true
 size = Vector3(10, 0.2, 3)
 material = SubResource("StandardMaterial3D_floor")
 
-[node name="StairRamp" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.916515, -0.399999, 0, 0.399999, 0.916515, 0, 0.9, 0)
+[node name="StairRamp" type="CSGBox3D" parent="." unique_id=550090651]
+transform = Transform3D(1, 0, 0, 0, 0.88254356, -0.47022957, 0, 0.47022957, 0.88254356, -0.0065307617, 1.4549582, 0.49189395)
 use_collision = true
-size = Vector3(6, 0.2, 5)
+size = Vector3(9.930298, 0.2, 7.458008)
 material = SubResource("StandardMaterial3D_floor")
 
-[node name="Floor_Upper" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, -3.5)
+[node name="Floor_Upper" type="CSGBox3D" parent="." unique_id=2004749977]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3149638, -3.8867493)
 use_collision = true
-size = Vector3(10, 0.2, 3)
+size = Vector3(10, 0.2, 2.2265015)
 material = SubResource("StandardMaterial3D_floor")
 
-[node name="Wall_East" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 1.0, 0)
+[node name="Wall_East" type="CSGBox3D" parent="." unique_id=1502372834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 1, 0)
 use_collision = true
-size = Vector3(0.2, 4.0, 10)
+size = Vector3(0.2, 6.5, 10)
 material = SubResource("StandardMaterial3D_wall")
 
-[node name="Wall_West" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 1.0, 0)
+[node name="Wall_West" type="CSGBox3D" parent="." unique_id=149893075]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 1, 0)
 use_collision = true
-size = Vector3(0.2, 4.0, 10)
+size = Vector3(0.2, 6.5, 10)
 material = SubResource("StandardMaterial3D_wall")
 
-[node name="DungeonTorch" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, 0)
+[node name="DungeonTorch" type="OmniLight3D" parent="." unique_id=2145639602]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 light_color = Color(1, 0.55, 0.2, 1)
 light_energy = 1.2
 omni_range = 8.0
 script = ExtResource("1_dungeon_torch")
 
-[node name="Exits" type="Node3D" parent="."]
+[node name="Exits" type="Node3D" parent="." unique_id=201055000]
 
-[node name="Exit_North" type="Marker3D" parent="Exits"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, -5)
+[node name="Exit_North" type="Marker3D" parent="Exits" unique_id=1287493458]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4173937, -5)
 
-[node name="Exit_South" type="Marker3D" parent="Exits"]
+[node name="Exit_South" type="Marker3D" parent="Exits" unique_id=121817303]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 5)
