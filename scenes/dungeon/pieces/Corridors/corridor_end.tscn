@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cp3m336wip6pp"]
 
-[ext_resource type="PackedScene" path="res://assets/FBX format/corridor-end.fbx" id="1_ngqxt"]
-[ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_r5hna"]
+[ext_resource type="PackedScene" uid="uid://dgak4otu2whjy" path="res://assets/FBX format/corridor-end.fbx" id="1_ngqxt"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_r5hna"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6wdk3"]
 albedo_texture = ExtResource("2_r5hna")
@@ -9,10 +9,11 @@ albedo_texture = ExtResource("2_r5hna")
 [node name="corridor-end" unique_id=1370182493 instance=ExtResource("1_ngqxt")]
 
 [node name="corridor-end" parent="." index="0" unique_id=975865030]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_6wdk3")
 
-[node name="Exits" type="Node3D" parent="."]
+[node name="Exits" type="Node3D" parent="." index="1" unique_id=1639824283]
 
-[node name="Exit_Narrow_South" type="Marker3D" parent="Exits"]
+[node name="Exit_Narrow_South" type="Marker3D" parent="Exits" index="0" unique_id=1962489139]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
 metadata/socket_type = "NARROW"

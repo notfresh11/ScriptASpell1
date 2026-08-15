@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cvioyogqajmac"]
 
-[ext_resource type="PackedScene" path="res://assets/FBX format/corridor-corner.fbx" id="1_w2h1n"]
-[ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_qj0q7"]
+[ext_resource type="PackedScene" uid="uid://dstg3t2owu653" path="res://assets/FBX format/corridor-corner.fbx" id="1_w2h1n"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_qj0q7"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rsx1s"]
 albedo_texture = ExtResource("2_qj0q7")
@@ -9,6 +9,7 @@ albedo_texture = ExtResource("2_qj0q7")
 [node name="corridor-corner" unique_id=1709434757 instance=ExtResource("1_w2h1n")]
 
 [node name="corridor-corner" parent="." index="0" unique_id=734339516]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_rsx1s")
 
 [node name="Exits" type="Node3D" parent="." index="1" unique_id=1273616159]
