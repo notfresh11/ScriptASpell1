@@ -2,35 +2,29 @@
 
 [ext_resource type="PackedScene" path="res://assets/FBX format/room-wide.fbx" id="1_ooymt"]
 [ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_iok7x"]
-[ext_resource type="Script" path="res://addons/SimpleDungeons/DungeonRoom3D.gd" id="3_dungeon_room"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lyri7"]
 albedo_texture = ExtResource("2_iok7x")
 
 [node name="room-wide" unique_id=62389361 instance=ExtResource("1_ooymt")]
-script = ExtResource("3_dungeon_room")
-size_in_voxels = Vector3i(2, 1, 1)
-voxel_scale = Vector3(10, 4, 10)
-min_count = 1
-max_count = 2
 
 [node name="room-wide" parent="." index="0" unique_id=1435481144]
 surface_material_override/0 = SubResource("StandardMaterial3D_lyri7")
 
-[node name="DOOR_North_1" type="Node3D" parent="." index="1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -5)
+[node name="Exits" type="Node3D" parent="."]
 
-[node name="DOOR_North_2" type="Node3D" parent="." index="2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
+[node name="Exit_Narrow_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+metadata/socket_type = "NARROW"
 
-[node name="DOOR_South_1" type="Node3D" parent="." index="3"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 5)
+[node name="Exit_Narrow_South" type="Marker3D" parent="Exits"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 6)
+metadata/socket_type = "NARROW"
 
-[node name="DOOR_South_2" type="Node3D" parent="." index="4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
+[node name="Exit_Narrow_East" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 6, 0, 0)
+metadata/socket_type = "NARROW"
 
-[node name="DOOR_East" type="Node3D" parent="." index="5"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 0)
-
-[node name="DOOR_West" type="Node3D" parent="." index="6"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 0)
+[node name="Exit_Narrow_West" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -6, 0, 0)
+metadata/socket_type = "NARROW"

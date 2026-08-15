@@ -2,22 +2,22 @@
 
 [ext_resource type="PackedScene" uid="uid://dstg3t2owu653" path="res://assets/FBX format/corridor-corner.fbx" id="1_w2h1n"]
 [ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_qj0q7"]
-[ext_resource type="Script" path="res://addons/SimpleDungeons/DungeonRoom3D.gd" id="3_dungeon_room"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rsx1s"]
 albedo_texture = ExtResource("2_qj0q7")
 
 [node name="corridor-corner" unique_id=1709434757 instance=ExtResource("1_w2h1n")]
-script = ExtResource("3_dungeon_room")
-size_in_voxels = Vector3i(1, 1, 1)
-voxel_scale = Vector3(10, 4, 10)
 
 [node name="corridor-corner" parent="." index="0" unique_id=734339516]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_rsx1s")
 
-[node name="DOOR_North" type="Node3D" parent="." index="1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+[node name="Exits" type="Node3D" parent="." index="1" unique_id=1273616159]
 
-[node name="DOOR_East" type="Node3D" parent="." index="2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
+[node name="Exit_Narrow_North" type="Marker3D" parent="Exits" index="0" unique_id=1377184382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_East" type="Marker3D" parent="Exits" index="1" unique_id=325867383]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2, 0, 0)
+metadata/socket_type = "NARROW"
