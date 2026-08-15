@@ -11,8 +11,8 @@ extends Node3D
 @export var t_junction_weight: float = 15.0
 @export var four_way_weight: float = 10.0
 @export var room_weight: float = 20.0
-@export var stairs_straight_weight: float = 8.0
-@export var stairs_zigzag_weight: float = 8.0
+@export var stairs_straight_weight: float = 12.0
+@export var stairs_zigzag_weight: float = 12.0
 
 @export_group("Loop Settings")
 @export var loop_chance: float = 0.15 # 15% șansă de a forma buclă dacă 2 ieșiri se întâlnesc
@@ -34,8 +34,8 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 @onready var loot_node: Node3D = $Loot
 @onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 
-# Grid stocare piese pe coordonate discrete de celulă 2D (10x10m grid)
-# Format: { Vector2i(x, y): { "scene": PackedScene, "rot_steps": int, "active_dirs": Array[int], "instance": Node3D, "depth": int } }
+# Grid stocare piese pe coordonate discrete 3D (Vector3i - x, y_level, z)
+# Format: { Vector3i(x, y_level, z): { "scene": PackedScene, "rot_steps": int, "active_dirs": Array[int], "instance": Node3D, "depth": int } }
 var grid: Dictionary = {}
 
 func _ready() -> void:
@@ -97,11 +97,18 @@ func get_active_directions(base_dirs: Array[int], rot_steps: int) -> Array[int]:
 		active.append((b + rot_steps) % 4)
 	return active
 
+# Calculează offset-ul Y la ieșirea dintr-o piesă (0 pentru piese normale, +1 pentru ieșirea superioară a scărilor)
+func get_exit_y_delta(scene: PackedScene, rot_steps: int, exit_dir: int) -> int:
+	if scene == STAIRS_STRAIGHT_SCENE or scene == STAIRS_ZIGZAG_SCENE:
+		var base_d = (exit_dir - rot_steps + 4) % 4
+		if base_d == 0: # Ieșirea superioară (North în modelul de bază, urcă 1 nivel Y = +2m)
+			return 1
+	return 0
+
 # Calculul ponderilor dinamice în funcție de adâncime (Depth-Based Generation)
 func get_scene_weight(scene: PackedScene, depth_ratio: float) -> float:
 	match scene:
 		HALLWAY_SCENE:
-			# Multe coridoare la început (depth mic), mai puține adânc
 			return lerp(hallway_weight * 1.5, hallway_weight * 0.5, depth_ratio)
 		CORNER_SCENE:
 			return corner_weight
@@ -110,7 +117,6 @@ func get_scene_weight(scene: PackedScene, depth_ratio: float) -> float:
 		FOUR_WAY_SCENE:
 			return lerp(four_way_weight * 0.3, four_way_weight * 1.8, depth_ratio)
 		ROOM_SCENE:
-			# Camere mari puține la început, foarte multe adânc în dungeon (săli de tezaur)
 			return lerp(room_weight * 0.2, room_weight * 2.5, depth_ratio)
 		STAIRS_STRAIGHT_SCENE:
 			return stairs_straight_weight
@@ -140,28 +146,29 @@ func select_weighted_scene(candidate_scenes: Array, depth_ratio: float) -> Packe
 
 	return candidate_scenes[0]
 
-# --- ALGORITMUL DE GENERARE PROCEDURALĂ BAZAT PE SOCKET-URI & GRID 10x10M ---
+# --- ALGORITMUL DE GENERARE PROCEDURALĂ BAZAT PE SOCKET-URI & GRID 3D ---
 func generate_dungeon() -> void:
-	print("Începe generarea procedurală a dungeon-ului (Socket-based + Depth + Controlled Loops)...")
+	print("Începe generarea procedurală a dungeon-ului (Socket-based + Verticality + Loops)...")
 
 	grid.clear()
 
 	for child in pieces_node.get_children():
 		child.queue_free()
 
+	# Coadă de ieșiri deschise: { "grid_pos": Vector3i, "dir": int, "depth": int }
 	var open_exits_queue: Array[Dictionary] = []
 
-	# 1. Entrance la (0, 0)
+	# 1. Entrance la (0, 0, 0)
 	var entrance_base_dirs = get_piece_base_directions(ENTRANCE_SCENE)
 	var entrance_active_dirs = get_active_directions(entrance_base_dirs, 0)
 
 	var entrance_instance = ENTRANCE_SCENE.instantiate()
-	entrance_instance.name = "Piece_0_0_Entrance"
+	entrance_instance.name = "Piece_0_0_0_Entrance"
 	entrance_instance.position = Vector3.ZERO
 	entrance_instance.rotation_degrees = Vector3.ZERO
 	pieces_node.add_child(entrance_instance, true)
 
-	grid[Vector2i(0, 0)] = {
+	grid[Vector3i(0, 0, 0)] = {
 		"scene": ENTRANCE_SCENE,
 		"rot_steps": 0,
 		"active_dirs": entrance_active_dirs,
@@ -171,7 +178,7 @@ func generate_dungeon() -> void:
 
 	for d in entrance_active_dirs:
 		open_exits_queue.append({
-			"cell": Vector2i(0, 0),
+			"grid_pos": Vector3i(0, 0, 0),
 			"dir": d,
 			"depth": 1
 		})
@@ -193,25 +200,29 @@ func generate_dungeon() -> void:
 	# 2. Procesăm coada de ieșiri deschise
 	while not open_exits_queue.is_empty() and grid.size() < max_main_pieces:
 		var current_exit = open_exits_queue.pop_front()
-		var cell: Vector2i = current_exit["cell"]
+		var grid_pos: Vector3i = current_exit["grid_pos"]
 		var exit_dir: int = current_exit["dir"]
 		var depth: int = current_exit["depth"]
 
-		var target_cell: Vector2i = cell + get_dir_vector(exit_dir)
+		var dir_v2 = get_dir_vector(exit_dir)
+		var parent_scene = grid[grid_pos]["scene"]
+		var parent_rot = grid[grid_pos]["rot_steps"]
+
+		var y_delta = get_exit_y_delta(parent_scene, parent_rot, exit_dir)
+
+		var target_grid_pos = Vector3i(grid_pos.x + dir_v2.x, grid_pos.y + y_delta, grid_pos.z + dir_v2.y)
 		var incoming_dir: int = (exit_dir + 2) % 4
 
-		# Dacă celula țintă este deja ocupată, verificăm dacă putem forma un circuit/bucle (Controlled Loops)
-		if target_cell in grid:
-			# Dacă e activat loop_chance și piesa din celula țintă are un socket orientat spre incoming_dir, lăsăm deschisă conexiunea!
+		# Verificăm dacă celula țintă pe 3D e ocupată
+		if target_grid_pos in grid:
 			if randf() < loop_chance:
-				var nbr_active_dirs: Array = grid[target_cell]["active_dirs"]
+				var nbr_active_dirs: Array = grid[target_grid_pos]["active_dirs"]
 				if incoming_dir in nbr_active_dirs:
-					print("S-a format o buclă/circuit la celula: ", target_cell)
+					print("S-a format o buclă/circuit la 3D pos: ", target_grid_pos)
 			continue
 
 		var depth_ratio = float(grid.size()) / float(max_main_pieces)
 
-		# Clonăm lista de piese candidate
 		var candidates = normal_piece_scenes.duplicate()
 		var piece_placed = false
 
@@ -233,10 +244,12 @@ func generate_dungeon() -> void:
 				for d in active_dirs:
 					if d == incoming_dir:
 						continue
-					var nbr = target_cell + get_dir_vector(d)
-					if nbr in grid:
+					var nbr_v2 = get_dir_vector(d)
+					var next_y_delta = get_exit_y_delta(scene, rot_steps, d)
+					var nbr_3d = Vector3i(target_grid_pos.x + nbr_v2.x, target_grid_pos.y + next_y_delta, target_grid_pos.z + nbr_v2.y)
+					if nbr_3d in grid:
 						var nbr_incoming = (d + 2) % 4
-						var nbr_active_dirs: Array = grid[nbr]["active_dirs"]
+						var nbr_active_dirs: Array = grid[nbr_3d]["active_dirs"]
 						if not nbr_incoming in nbr_active_dirs:
 							valid = false
 							break
@@ -245,19 +258,17 @@ func generate_dungeon() -> void:
 					continue
 
 				var piece_instance: Node3D = scene.instantiate()
-				piece_instance.name = "Piece_%d_%d" % [target_cell.x, target_cell.y]
+				piece_instance.name = "Piece_%d_%d_%d" % [target_grid_pos.x, target_grid_pos.y, target_grid_pos.z]
 
-				# Offset pe Y mic pentru piese de scări
-				var y_offset = 0.0
-				if scene == STAIRS_STRAIGHT_SCENE or scene == STAIRS_ZIGZAG_SCENE:
-					y_offset = -1.0 # coborâre nivel
+				# Fiecărui nivel Y îi corespund 2 metri diferență de înălțime
+				var world_y = target_grid_pos.y * 2.0
 
-				piece_instance.position = Vector3(target_cell.x * 10.0, y_offset, target_cell.y * 10.0)
+				piece_instance.position = Vector3(target_grid_pos.x * 10.0, world_y, target_grid_pos.z * 10.0)
 				piece_instance.rotation_degrees = Vector3(0.0, -rot_steps * 90.0, 0.0)
 
 				pieces_node.add_child(piece_instance, true)
 
-				grid[target_cell] = {
+				grid[target_grid_pos] = {
 					"scene": scene,
 					"rot_steps": rot_steps,
 					"active_dirs": active_dirs,
@@ -269,33 +280,35 @@ func generate_dungeon() -> void:
 
 				for d in active_dirs:
 					if d != incoming_dir:
-						var nbr = target_cell + get_dir_vector(d)
-						if not nbr in grid:
-							open_exits_queue.append({
-								"cell": target_cell,
-								"dir": d,
-								"depth": depth + 1
-							})
+						open_exits_queue.append({
+							"grid_pos": target_grid_pos,
+							"dir": d,
+							"depth": depth + 1
+						})
 				break
 
 	# 3. Sigilarea tuturor ieșirilor rămase deschise cu Dead End-uri
 	var dead_end_base_dirs = get_piece_base_directions(DEAD_END_SCENE) # [2] (South)
 
 	var unsealed_exits: Array[Dictionary] = []
-	for cell in grid:
-		var info = grid[cell]
+	for grid_pos_3d in grid:
+		var info = grid[grid_pos_3d]
+		var scene = info["scene"]
+		var rot_steps = info["rot_steps"]
 		for d in info["active_dirs"]:
-			var nbr = cell + get_dir_vector(d)
-			if not nbr in grid:
+			var dir_v2 = get_dir_vector(d)
+			var y_delta = get_exit_y_delta(scene, rot_steps, d)
+			var nbr_3d = Vector3i(grid_pos_3d.x + dir_v2.x, grid_pos_3d.y + y_delta, grid_pos_3d.z + dir_v2.y)
+			if not nbr_3d in grid:
 				unsealed_exits.append({
-					"from_cell": cell,
+					"from_grid_pos": grid_pos_3d,
 					"exit_dir": d,
-					"target_cell": nbr
+					"target_grid_pos": nbr_3d
 				})
 
 	for conn in unsealed_exits:
-		var target_cell: Vector2i = conn["target_cell"]
-		if target_cell in grid:
+		var target_grid_pos: Vector3i = conn["target_grid_pos"]
+		if target_grid_pos in grid:
 			continue
 
 		var exit_dir: int = conn["exit_dir"]
@@ -305,13 +318,15 @@ func generate_dungeon() -> void:
 		var active_dirs = get_active_directions(dead_end_base_dirs, rot_steps)
 
 		var dead_end_instance: Node3D = DEAD_END_SCENE.instantiate()
-		dead_end_instance.name = "Piece_%d_%d_DeadEnd" % [target_cell.x, target_cell.y]
-		dead_end_instance.position = Vector3(target_cell.x * 10.0, 0.0, target_cell.y * 10.0)
+		dead_end_instance.name = "Piece_%d_%d_%d_DeadEnd" % [target_grid_pos.x, target_grid_pos.y, target_grid_pos.z]
+
+		var world_y = target_grid_pos.y * 2.0
+		dead_end_instance.position = Vector3(target_grid_pos.x * 10.0, world_y, target_grid_pos.z * 10.0)
 		dead_end_instance.rotation_degrees = Vector3(0.0, -rot_steps * 90.0, 0.0)
 
 		pieces_node.add_child(dead_end_instance, true)
 
-		grid[target_cell] = {
+		grid[target_grid_pos] = {
 			"scene": DEAD_END_SCENE,
 			"rot_steps": rot_steps,
 			"active_dirs": active_dirs,
@@ -319,7 +334,7 @@ func generate_dungeon() -> void:
 			"depth": 99
 		}
 
-	print("Dungeon generat cu succes! Total piese plasate pe socket-uri: ", grid.size())
+	print("Dungeon generat cu succes pe nivele 3D! Total piese: ", grid.size())
 
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
@@ -327,12 +342,13 @@ func generate_dungeon() -> void:
 # --- SPAWNING LOOT PROCEDURAL ÎN FUNCȚIE DE ADÂNCIME ---
 func spawn_dungeon_loot() -> void:
 	print("Se spawnează loot în piese în funcție de adâncime...")
-	for cell in grid:
-		var info = grid[cell]
+	for grid_pos_3d in grid:
+		var info = grid[grid_pos_3d]
 		if info["scene"] == ENTRANCE_SCENE or info["scene"] == DEAD_END_SCENE:
 			continue
 
-		var center_pos = Vector3(cell.x * 10.0, 0.5, cell.y * 10.0)
+		var world_y = grid_pos_3d.y * 2.0
+		var center_pos = Vector3(grid_pos_3d.x * 10.0, world_y + 0.5, grid_pos_3d.z * 10.0)
 		var depth = info.get("depth", 1)
 
 		if info["scene"] == ROOM_SCENE:
@@ -350,7 +366,6 @@ func spawn_loot_at(pos: Vector3, depth: int) -> void:
 	var loot_instance = LOOT_SCENE.instantiate()
 	var rarity_roll = randf()
 
-	# Șanse crescute de loot Epic și Rare la adâncimi mari (depth > 5)
 	var epic_chance = 0.05 + (0.02 * depth)
 	var rare_chance = 0.20 + (0.03 * depth)
 
