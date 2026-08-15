@@ -255,8 +255,8 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 
 			if not overlaps:
 				candidate_inst.name = "Piece_%d_%d" % [floor_idx, spawned_pieces.size()]
-				candidate_inst.global_transform = cand_global_xform
 				pieces_node.add_child(candidate_inst, true)
+				candidate_inst.global_transform = cand_global_xform
 
 				_add_collisions_to_piece(candidate_inst)
 
@@ -296,17 +296,28 @@ func _seal_single_socket(socket_idx: int) -> void:
 		var cand_marker = de_markers[0]
 		var cand_marker_local = get_relative_transform(cand_marker, dead_end_inst)
 		var cand_global_xform = target_xform * FLIP_180_Y * cand_marker_local.inverse()
-
-		dead_end_inst.name = "Piece_End_%d" % spawned_pieces.size()
-		dead_end_inst.global_transform = cand_global_xform
-		pieces_node.add_child(dead_end_inst, true)
-
-		_add_collisions_to_piece(dead_end_inst)
-
 		var de_local_aabb = get_piece_local_aabb(dead_end_inst)
 		var de_world_aabb = transform_aabb(de_local_aabb, cand_global_xform)
-		placed_aabbs.append(de_world_aabb)
-		spawned_pieces.append(dead_end_inst)
+
+		var overlaps = false
+		for placed_aabb in placed_aabbs:
+			if aabbs_intersect_inset(de_world_aabb, placed_aabb, 0.3):
+				overlaps = true
+				break
+
+		if not overlaps:
+			dead_end_inst.name = "Piece_End_%d" % spawned_pieces.size()
+			pieces_node.add_child(dead_end_inst, true)
+			dead_end_inst.global_transform = cand_global_xform
+
+			_add_collisions_to_piece(dead_end_inst)
+
+			placed_aabbs.append(de_world_aabb)
+			spawned_pieces.append(dead_end_inst)
+		else:
+			dead_end_inst.queue_free()
+	else:
+		dead_end_inst.queue_free()
 
 	open_sockets.remove_at(socket_idx)
 
