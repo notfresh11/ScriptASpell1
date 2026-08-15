@@ -470,6 +470,24 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 
 ---
 
+### SESIUNEA 7: Modificarea Algoritmului de Generare Procedurală pe Grid 3D & Structură pe Etaje
+
+#### A. Ce s-a realizat în această sesiune (Project State)
+1. **Generare Procedurală Rigidă pe Grid 3D Multi-Floor:**
+   - Reorganizat algoritmul din `scripts/dungeon/dungeon_generator.gd` pe un grid 3D discret definit prin `CELL_SIZE = Vector3(10.0, 4.0, 10.0)`.
+   - Piesa de intrare (`EntrancePiece`) este ancorată fix la poziția `(0, 0, 0)`.
+2. **Limită de 20 de Piese per Nivel / Etaj (`pieces_per_floor = 20`):**
+   - Algoritmul extinde fiecare nivel Y independent până când atinge ~20 de piese/camere plane per etaj.
+   - După completarea etajului curent, generatorul alege o ieșire rămasă liberă pe acel etaj și plasează o scară de trecere (`stairs_straight_piece.tscn` sau `stairs_zigzag_piece.tscn`) care coboară pe Y cu 4.0m la nivelul inferior.
+   - Procesul se repetă pe structura definită de `max_floors` (implicit 3 etaje).
+3. **Calibrat Scările & Sigilat Ieșirile Rămase (Dead Ends):**
+   - Ajustat ieșirile `Exit_North` ale pieselor de scări pentru a coborî/urca curat la nivelul Y corespunzător.
+   - Toate frontierele/ieșirile neconectate de pe toate etajele sunt sigilate automat cu piesa `dead_end_piece.tscn` (pereți de capăt) pentru a preveni căderea jucătorilor în void.
+4. **Mod Debug Fly / Noclip:**
+   - Implementat în `scripts/player/player_movement.gd` modul de zbor/noclip toggled prin tasta `~` (`KEY_QUOTELEFT` / `KEY_ASCIITILDE`), permițând inspectarea rapidă a hărții 3D generate pe toate etajele.
+
+---
+
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
 
 Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.
