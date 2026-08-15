@@ -44,9 +44,6 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 # Piese instanțiate
 var spawned_pieces: Array[Node3D] = []
 
-# Lista AABB-urilor lumii pentru piesele deja plasate (folosite la detectarea suprapunerilor)
-var placed_aabbs: Array[AABB] = []
-
 # Structura pentru un socket deschis: { "piece": Node3D, "marker": Marker3D, "floor": int, "type": String }
 var open_sockets: Array[Dictionary] = []
 
@@ -89,86 +86,19 @@ func get_socket_type(marker: Marker3D) -> String:
 		return "WIDE"
 	return "NARROW"
 
-func get_relative_transform(node: Node3D, root_node: Node3D) -> Transform3D:
-	var xform = Transform3D.IDENTITY
-	var curr: Node = node
-	while curr != null and curr != root_node:
-		if curr is Node3D:
-			xform = (curr as Node3D).transform * xform
-		curr = curr.get_parent()
-	return xform
-
-func get_piece_local_aabb(piece_instance: Node3D) -> AABB:
-	if piece_instance.has_meta("aabb"):
-		return piece_instance.get_meta("aabb")
-
-	var combined_aabb: AABB = AABB()
-	var has_aabb: bool = false
-
-	var stack: Array[Node] = piece_instance.get_children()
+# Generare coliziune fizică (trimesh) pentru podea și pereti pe fiecare MeshInstance3D
+func _add_collisions_to_piece(piece_instance: Node3D) -> void:
+	var stack: Array[Node] = [piece_instance]
 	while not stack.is_empty():
-		var node = stack.pop_back()
-		stack.append_array(node.get_children())
+		var current_node = stack.pop_back()
+		for child in current_node.get_children():
+			stack.append(child)
 
-		var node_aabb: AABB = AABB()
-		var found_node_aabb: bool = false
+		if current_node is MeshInstance3D and (current_node as MeshInstance3D).mesh:
+			var mesh_inst = current_node as MeshInstance3D
+			mesh_inst.create_trimesh_collision()
 
-		if node is CSGBox3D:
-			var size = (node as CSGBox3D).size
-			node_aabb = AABB(-size / 2.0, size)
-			found_node_aabb = true
-		elif node is MeshInstance3D and (node as MeshInstance3D).mesh:
-			node_aabb = (node as MeshInstance3D).mesh.get_aabb()
-			found_node_aabb = true
-		elif node is CollisionShape3D and (node as CollisionShape3D).shape:
-			var shape = (node as CollisionShape3D).shape
-			if shape is BoxShape3D:
-				var size = (shape as BoxShape3D).size
-				node_aabb = AABB(-size / 2.0, size)
-				found_node_aabb = true
-
-		if found_node_aabb and node is Node3D:
-			var local_xform: Transform3D = get_relative_transform(node as Node3D, piece_instance)
-			var transformed_aabb = transform_aabb(node_aabb, local_xform)
-			if not has_aabb:
-				combined_aabb = transformed_aabb
-				has_aabb = true
-			else:
-				combined_aabb = combined_aabb.merge(transformed_aabb)
-
-	if not has_aabb:
-		combined_aabb = AABB(Vector3(-4.0, 0.0, -4.0), Vector3(8.0, 4.0, 8.0))
-
-	return combined_aabb
-
-func transform_aabb(aabb: AABB, xform: Transform3D) -> AABB:
-	var corners = [
-		aabb.position,
-		aabb.position + Vector3(aabb.size.x, 0, 0),
-		aabb.position + Vector3(0, aabb.size.y, 0),
-		aabb.position + Vector3(0, 0, aabb.size.z),
-		aabb.position + Vector3(aabb.size.x, aabb.size.y, 0),
-		aabb.position + Vector3(aabb.size.x, 0, aabb.size.z),
-		aabb.position + Vector3(0, aabb.size.y, aabb.size.z),
-		aabb.position + aabb.size
-	]
-	var new_aabb = AABB(xform * corners[0], Vector3.ZERO)
-	for i in range(1, 8):
-		new_aabb = new_aabb.expand(xform * corners[i])
-	return new_aabb
-
-func aabbs_intersect_inset(aabb1: AABB, aabb2: AABB, inset: float = 0.2) -> bool:
-	var inset_vec = Vector3(inset, inset, inset)
-	if aabb1.size.x <= 2 * inset or aabb1.size.y <= 2 * inset or aabb1.size.z <= 2 * inset:
-		return aabb1.intersects(aabb2)
-	if aabb2.size.x <= 2 * inset or aabb2.size.y <= 2 * inset or aabb2.size.z <= 2 * inset:
-		return aabb1.intersects(aabb2)
-
-	var shrunk1 = AABB(aabb1.position + inset_vec, aabb1.size - 2 * inset_vec)
-	var shrunk2 = AABB(aabb2.position + inset_vec, aabb2.size - 2 * inset_vec)
-	return shrunk1.intersects(shrunk2)
-
-# Încearcă plasarea unei piese dintr-o listă de piese la un socket dat
+# Încearcă plasarea unei piese dintr-o listă de piese la un socket dat (exclusiv pe bază de socket)
 func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 	if target_idx < 0 or target_idx >= open_sockets.size():
 		return false
@@ -184,7 +114,6 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 	for scene in pool:
 		var candidate_inst = scene.instantiate()
 		var cand_markers = get_piece_exit_markers(candidate_inst)
-		var cand_local_aabb = get_piece_local_aabb(candidate_inst)
 
 		cand_markers.shuffle()
 
@@ -195,42 +124,34 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 				continue
 
 			var cand_global_xform = target_marker.global_transform * FLIP_180_Y * cand_marker.transform.inverse()
-			var cand_world_aabb = transform_aabb(cand_local_aabb, cand_global_xform)
 
-			var overlaps = false
-			for placed_aabb in placed_aabbs:
-				if aabbs_intersect_inset(cand_world_aabb, placed_aabb, 0.2):
-					overlaps = true
-					break
+			candidate_inst.name = "Piece_%d_%d" % [floor_idx, spawned_pieces.size()]
+			candidate_inst.global_transform = cand_global_xform
+			pieces_node.add_child(candidate_inst, true)
 
-			if not overlaps:
-				candidate_inst.name = "Piece_%d_%d" % [floor_idx, spawned_pieces.size()]
-				candidate_inst.global_transform = cand_global_xform
-				pieces_node.add_child(candidate_inst, true)
+			_add_collisions_to_piece(candidate_inst)
 
-				spawned_pieces.append(candidate_inst)
-				placed_aabbs.append(cand_world_aabb)
-				open_sockets.remove_at(target_idx)
+			spawned_pieces.append(candidate_inst)
+			open_sockets.remove_at(target_idx)
 
-				for m in cand_markers:
-					if m == cand_marker:
-						continue
-					open_sockets.append({
-						"piece": candidate_inst,
-						"marker": m,
-						"floor": floor_idx,
-						"type": get_socket_type(m)
-					})
-				return true
+			for m in cand_markers:
+				if m == cand_marker:
+					continue
+				open_sockets.append({
+					"piece": candidate_inst,
+					"marker": m,
+					"floor": floor_idx,
+					"type": get_socket_type(m)
+				})
+			return true
 
 		candidate_inst.queue_free()
 
 	return false
 
 func generate_dungeon() -> void:
-	print("Începe generarea procedurală avansată pe 3 etaje...")
+	print("Începe generarea procedurală pe bază de socket-uri pe 3 etaje...")
 	spawned_pieces.clear()
-	placed_aabbs.clear()
 	open_sockets.clear()
 	stairs_per_floor.clear()
 
@@ -247,11 +168,8 @@ func generate_dungeon() -> void:
 	entrance_inst.position = Vector3.ZERO
 	entrance_inst.rotation_degrees = Vector3.ZERO
 	pieces_node.add_child(entrance_inst, true)
+	_add_collisions_to_piece(entrance_inst)
 	spawned_pieces.append(entrance_inst)
-
-	var entrance_local_aabb = get_piece_local_aabb(entrance_inst)
-	var entrance_world_aabb = transform_aabb(entrance_local_aabb, entrance_inst.global_transform)
-	placed_aabbs.append(entrance_world_aabb)
 
 	for marker in get_piece_exit_markers(entrance_inst):
 		open_sockets.append({
@@ -261,7 +179,7 @@ func generate_dungeon() -> void:
 			"type": get_socket_type(marker)
 		})
 
-	# 2. PASUL 2: Generare TRUNCHI WIDE pe Etajul 0 (Traseu adânc/variat)
+	# 2. PASUL 2: Generare TRUNCHI WIDE moderat pe Etajul 0 (doar la Etajul 0)
 	var wide_corridors_pool = [
 		CORRIDOR_WIDE_SCENE,
 		CORRIDOR_WIDE_CORNER_SCENE,
@@ -269,11 +187,11 @@ func generate_dungeon() -> void:
 		CORRIDOR_WIDE_INTERSECTION_SCENE
 	]
 
-	var wide_trunk_target = 8
+	var wide_trunk_target = 4
 	var wide_trunk_count = 0
 	var attempts = 0
 
-	while wide_trunk_count < wide_trunk_target and attempts < 40:
+	while wide_trunk_count < wide_trunk_target and attempts < 20:
 		attempts += 1
 		var wide_socket_indices: Array[int] = []
 		for i in range(open_sockets.size()):
@@ -287,9 +205,9 @@ func generate_dungeon() -> void:
 		if try_place_piece_at_socket(target_idx, wide_corridors_pool):
 			wide_trunk_count += 1
 
-	# 3. PASUL 3: Tranziții WIDE -> NARROW pe Etajul 0 (căutare dinamică safe)
+	# 3. PASUL 3: Tranziții WIDE -> NARROW pe Etajul 0
 	attempts = 0
-	while attempts < 30:
+	while attempts < 20:
 		attempts += 1
 		var wide_socket_idx = -1
 		for i in range(open_sockets.size()):
@@ -303,7 +221,7 @@ func generate_dungeon() -> void:
 		if not try_place_piece_at_socket(wide_socket_idx, [CORRIDOR_TRANSITION_SCENE]):
 			break
 
-	# 4. PASUL 4: Generare Piese NARROW + Camere pe Etajul 0 (până la 30 piese)
+	# 4. PASUL 4: Generare Piese NARROW + Camere pe Etajul 0
 	var narrow_and_rooms_pool = [
 		CORRIDOR_SCENE, CORRIDOR_CORNER_SCENE, CORRIDOR_JUNCTION_SCENE, CORRIDOR_INTERSECTION_SCENE,
 		ROOM_SMALL_SCENE, ROOM_SMALL_2_SCENE, ROOM_CORNER_SCENE, ROOM_LARGE_SCENE, ROOM_LARGE_2_SCENE, ROOM_WIDE_SCENE, ROOM_WIDE_2_SCENE
@@ -325,7 +243,7 @@ func generate_dungeon() -> void:
 		if try_place_piece_at_socket(target_idx, narrow_and_rooms_pool):
 			floor_0_pieces += 1
 
-	# 5. PASUL 5: Plasare Scări de la Etajul 0 către Etajul 1 (sus) și Etajul -1 (jos) (maxim 2 scări pe etaj)
+	# 5. PASUL 5: Plasare Scări de la Etajul 0 către Etajul 1 (sus) și Etajul -1 (jos) (exact 2 scări pe etaj)
 	var stair_scenes = [STAIRS_SCENE, STAIRS_WIDE_SCENE]
 	var target_floors = [1, -1]
 
@@ -359,7 +277,6 @@ func generate_dungeon() -> void:
 			for stair_scene in shuffled_stairs:
 				var stair_inst = stair_scene.instantiate()
 				var stair_markers = get_piece_exit_markers(stair_inst)
-				var stair_local_aabb = get_piece_local_aabb(stair_inst)
 
 				# Pentru dest_floor == 1 (URCARE), conectorul de pe Etajul 0 trebuie să fie 'Bottom'.
 				# Pentru dest_floor == -1 (COBORÂRE), conectorul de pe Etajul 0 trebuie să fie 'Top'.
@@ -376,37 +293,30 @@ func generate_dungeon() -> void:
 
 				for cand_marker in matching_cand_markers:
 					var cand_global_xform = target_marker.global_transform * FLIP_180_Y * cand_marker.transform.inverse()
-					var cand_world_aabb = transform_aabb(stair_local_aabb, cand_global_xform)
 
-					var overlaps = false
-					for placed_aabb in placed_aabbs:
-						if aabbs_intersect_inset(cand_world_aabb, placed_aabb, 0.2):
-							overlaps = true
-							break
+					stair_inst.name = "Stair_0_to_%d" % dest_floor
+					stair_inst.global_transform = cand_global_xform
+					pieces_node.add_child(stair_inst, true)
 
-					if not overlaps:
-						stair_inst.name = "Stair_0_to_%d" % dest_floor
-						stair_inst.global_transform = cand_global_xform
-						pieces_node.add_child(stair_inst, true)
+					_add_collisions_to_piece(stair_inst)
 
-						spawned_pieces.append(stair_inst)
-						placed_aabbs.append(cand_world_aabb)
-						open_sockets.remove_at(target_idx)
-						stairs_per_floor[0] += 1
-						stairs_per_floor[dest_floor] = stairs_per_floor.get(dest_floor, 0) + 1
+					spawned_pieces.append(stair_inst)
+					open_sockets.remove_at(target_idx)
+					stairs_per_floor[0] += 1
+					stairs_per_floor[dest_floor] = stairs_per_floor.get(dest_floor, 0) + 1
 
-						for m in stair_markers:
-							if m == cand_marker:
-								continue
-							open_sockets.append({
-								"piece": stair_inst,
-								"marker": m,
-								"floor": dest_floor,
-								"type": get_socket_type(m)
-							})
-						placed_stair = true
-						placed_stair_for_dest = true
-						break
+					for m in stair_markers:
+						if m == cand_marker:
+							continue
+						open_sockets.append({
+							"piece": stair_inst,
+							"marker": m,
+							"floor": dest_floor,
+							"type": get_socket_type(m)
+						})
+					placed_stair = true
+					placed_stair_for_dest = true
+					break
 
 				if placed_stair:
 					break
@@ -416,7 +326,7 @@ func generate_dungeon() -> void:
 			if not placed_stair:
 				attempted_socket_indices.append(target_idx)
 
-	# 6. PASUL 6: Generare piese pe Etajul 1 și Etajul -1 (până la 30 piese per etaj)
+	# 6. PASUL 6: Generare piese pe Etajul 1 și Etajul -1 (până la 30 piese per etaj, doar coridoare înguste & camere)
 	for floor_idx in [1, -1]:
 		var floor_piece_count = 0
 		attempts = 0
@@ -431,24 +341,18 @@ func generate_dungeon() -> void:
 				break
 
 			var target_idx = floor_socket_indices.pick_random()
-			# Pe etajele secundare includem și piese WIDE / Tranziție pentru a extinde scările WIDE
-			var secondary_pool = [
-				CORRIDOR_SCENE, CORRIDOR_CORNER_SCENE, CORRIDOR_JUNCTION_SCENE, CORRIDOR_INTERSECTION_SCENE,
-				CORRIDOR_TRANSITION_SCENE, CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_CORNER_SCENE, CORRIDOR_WIDE_JUNCTION_SCENE, CORRIDOR_WIDE_INTERSECTION_SCENE,
-				ROOM_SMALL_SCENE, ROOM_SMALL_2_SCENE, ROOM_CORNER_SCENE, ROOM_LARGE_SCENE, ROOM_LARGE_2_SCENE, ROOM_WIDE_SCENE, ROOM_WIDE_2_SCENE
-			]
-			if try_place_piece_at_socket(target_idx, secondary_pool):
+			if try_place_piece_at_socket(target_idx, narrow_and_rooms_pool):
 				floor_piece_count += 1
 
 	# 7. PASUL 7: Sigilare socket-uri rămase deschise cu capete de coridor
 	_seal_all_open_sockets()
 
-	print("Dungeon generat pe 3 etaje cu succes! Total piese plasate: %d" % spawned_pieces.size())
+	print("Dungeon generat exclusiv pe socket-uri cu succes! Total piese plasate: %d" % spawned_pieces.size())
 
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
 
-# Sigilare finală
+# Sigilare finală a tuturor socket-urilor deschise
 func _seal_all_open_sockets() -> void:
 	var sockets_to_seal = open_sockets.duplicate()
 	open_sockets.clear()
@@ -471,6 +375,8 @@ func _seal_all_open_sockets() -> void:
 		dead_end_inst.name = "Piece_End_%d" % spawned_pieces.size()
 		dead_end_inst.global_transform = cand_global_xform
 		pieces_node.add_child(dead_end_inst, true)
+
+		_add_collisions_to_piece(dead_end_inst)
 
 		spawned_pieces.append(dead_end_inst)
 

@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://0rqm5suwn8xx"]
+[gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://assets/FBX format/room-wide-variation.fbx" id="1_bylab"]
 [ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_8fmqd"]
@@ -13,6 +13,18 @@ surface_material_override/0 = SubResource("StandardMaterial3D_8wgsw")
 
 [node name="Exits" type="Node3D" parent="."]
 
+[node name="Exit_Narrow_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+metadata/socket_type = "NARROW"
+
 [node name="Exit_Narrow_South" type="Marker3D" parent="Exits"]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 6)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_East" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 6, 0, 0)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_West" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -6, 0, 0)
 metadata/socket_type = "NARROW"
