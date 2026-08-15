@@ -15,9 +15,9 @@ surface_material_override/0 = SubResource("StandardMaterial3D_gjfwl")
 [node name="Exits" type="Node3D" parent="." index="1" unique_id=68349823]
 
 [node name="Exit_Narrow_Top" type="Marker3D" parent="Exits" index="0" unique_id=1623428070]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
+transform = Transform3D(0.9999047, 0, 0.013806556, 0, 1, 0, -0.013806556, 0, 0.9999047, 0, 0, 2)
 metadata/socket_type = "NARROW"
 
 [node name="Exit_Narrow_Bottom" type="Marker3D" parent="Exits" index="1" unique_id=1999054136]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, -6)
+transform = Transform3D(-0.99999803, 0, -0.0019777683, 0, 1, 0, 0.0019777683, 0, -0.99999803, 0, -4, -6)
 metadata/socket_type = "NARROW"

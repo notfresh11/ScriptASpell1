@@ -15,9 +15,9 @@ surface_material_override/0 = SubResource("StandardMaterial3D_kerls")
 [node name="Exits" type="Node3D" parent="." index="1" unique_id=145607740]
 
 [node name="Exit_Wide_Top" type="Marker3D" parent="Exits" index="0" unique_id=576273875]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
+transform = Transform3D(0.99999994, 0, -0.00038987794, 0, 1, 0, 0.00038987794, 0, 0.99999994, 0, 0, 2)
 metadata/socket_type = "WIDE"
 
 [node name="Exit_Wide_Bottom" type="Marker3D" parent="Exits" index="1" unique_id=515052463]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, -6)
+transform = Transform3D(-0.9999368, 0, -0.011238664, 0, 1, 0, 0.011238664, 0, -0.9999368, 0, -4, -6)
 metadata/socket_type = "WIDE"

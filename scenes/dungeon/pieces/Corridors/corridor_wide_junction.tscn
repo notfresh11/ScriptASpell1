@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bo7uwpkfm7ott"]
 
-[ext_resource type="PackedScene" path="res://assets/FBX format/corridor-wide-junction.fbx" id="1_blicy"]
-[ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_gfkvh"]
+[ext_resource type="PackedScene" uid="uid://cdka2ts7eagsl" path="res://assets/FBX format/corridor-wide-junction.fbx" id="1_blicy"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_gfkvh"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rhuoq"]
 albedo_texture = ExtResource("2_gfkvh")
@@ -9,18 +9,19 @@ albedo_texture = ExtResource("2_gfkvh")
 [node name="corridor-wide-junction" unique_id=1095958814 instance=ExtResource("1_blicy")]
 
 [node name="corridor-wide-junction" parent="." index="0" unique_id=1700729108]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_rhuoq")
 
-[node name="Exits" type="Node3D" parent="."]
+[node name="Exits" type="Node3D" parent="." index="1" unique_id=640552360]
 
-[node name="Exit_Wide_North" type="Marker3D" parent="Exits"]
+[node name="Exit_Wide_North" type="Marker3D" parent="Exits" index="0" unique_id=2061010143]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
 metadata/socket_type = "WIDE"
 
-[node name="Exit_Wide_East" type="Marker3D" parent="Exits"]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 4, 0, 0)
+[node name="Exit_Wide_East" type="Marker3D" parent="Exits" index="1" unique_id=154251694]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 4.0328875, 0, 0)
 metadata/socket_type = "WIDE"
 
-[node name="Exit_Wide_South" type="Marker3D" parent="Exits"]
+[node name="Exit_Wide_South" type="Marker3D" parent="Exits" index="2" unique_id=387605706]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 4)
 metadata/socket_type = "WIDE"

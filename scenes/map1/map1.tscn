@@ -14,7 +14,7 @@ ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
 sky_material = SubResource("ProceduralSkyMaterial_sky")
 
 [sub_resource type="Environment" id="Environment_world"]
-background_energy_multiplier = 3.0
+background_energy_multiplier = 2.0
 sky = SubResource("Sky_env")
 ambient_light_source = 3
 ambient_light_color = Color(0.14373028, 0.12544477, 0.48124737, 1)

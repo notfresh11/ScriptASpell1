@@ -1,7 +1,7 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c1cveswcuugih"]
 
-[ext_resource type="PackedScene" path="res://assets/FBX format/room-wide-variation.fbx" id="1_bylab"]
-[ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_8fmqd"]
+[ext_resource type="PackedScene" uid="uid://dqmxa7m7445tj" path="res://assets/FBX format/room-wide-variation.fbx" id="1_bylab"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_8fmqd"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8wgsw"]
 albedo_texture = ExtResource("2_8fmqd")
@@ -11,20 +11,12 @@ albedo_texture = ExtResource("2_8fmqd")
 [node name="room-wide-variation" parent="." index="0" unique_id=1896480485]
 surface_material_override/0 = SubResource("StandardMaterial3D_8wgsw")
 
-[node name="Exits" type="Node3D" parent="."]
+[node name="Exits" type="Node3D" parent="." index="1" unique_id=1700362241]
 
-[node name="Exit_Narrow_North" type="Marker3D" parent="Exits"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+[node name="Exit_Narrow_East" type="Marker3D" parent="Exits" index="0" unique_id=552226250]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 10.009914, 0, 0)
 metadata/socket_type = "NARROW"
 
-[node name="Exit_Narrow_South" type="Marker3D" parent="Exits"]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 6)
-metadata/socket_type = "NARROW"
-
-[node name="Exit_Narrow_East" type="Marker3D" parent="Exits"]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 6, 0, 0)
-metadata/socket_type = "NARROW"
-
-[node name="Exit_Narrow_West" type="Marker3D" parent="Exits"]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -6, 0, 0)
+[node name="Exit_Narrow_West" type="Marker3D" parent="Exits" index="1" unique_id=71509144]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -9.980993, 0, 0)
 metadata/socket_type = "NARROW"
