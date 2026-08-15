@@ -1,8 +1,8 @@
 # scripts/dungeon/dungeon_generator.gd
 extends Node3D
 
-@export var pieces_per_floor: int = 35 # Numărul de piese per etaj
-@export var max_floors: int = 1 # 1 etaj principal (Floor 0)
+@export var pieces_per_floor: int = 30 # Numărul de piese per etaj
+@export var max_floors: int = 3 # 3 etaje (Floor 0, Floor 1, Floor 2)
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
 
 # Coridoare înguste (NARROW)
@@ -227,12 +227,21 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 	var target_xform = get_socket_global_transform(socket_data)
 	var target_type: String = socket_data["type"]
 	var floor_idx: int = socket_data["floor"]
+	var parent_piece: Node3D = socket_data["piece"]
+	var parent_is_room: bool = is_room_piece(parent_piece)
 
 	var pool = scene_pool.duplicate()
 	pool.shuffle()
 
 	for scene in pool:
 		var candidate_inst = scene.instantiate()
+		var cand_is_room: bool = is_room_piece(candidate_inst)
+
+		# REGULĂ STRICTĂ: Camerele nu se spawnează direct lângă alte camere!
+		if parent_is_room and cand_is_room:
+			candidate_inst.queue_free()
+			continue
+
 		var cand_markers = get_piece_exit_markers(candidate_inst)
 		var cand_local_aabb = get_piece_local_aabb(candidate_inst)
 
@@ -243,8 +252,14 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 			if cand_type != target_type:
 				continue
 
+			# Dacă este scară, conectăm DOAR prin socket-ul de sus (Top) ca să coboare curat
+			var is_stair = cand_is_stair_piece(candidate_inst)
+			if is_stair and not ("top" in cand_marker.name.to_lower()):
+				continue
+
 			var cand_marker_local = get_relative_transform(cand_marker, candidate_inst)
 			var cand_global_xform = target_xform * FLIP_180_Y * cand_marker_local.inverse()
+
 			var cand_world_aabb = transform_aabb(cand_local_aabb, cand_global_xform)
 
 			var overlaps = false
@@ -264,13 +279,18 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 				placed_aabbs.append(cand_world_aabb)
 				open_sockets.remove_at(target_idx)
 
+				# Calculăm noul floor_idx dacă piesa este o scară
+				var next_floor_idx = floor_idx
+				if cand_is_stair_piece(candidate_inst):
+					next_floor_idx = floor_idx + 1
+
 				for m in cand_markers:
 					if m == cand_marker:
 						continue
 					open_sockets.append({
 						"piece": candidate_inst,
 						"marker": m,
-						"floor": floor_idx,
+						"floor": next_floor_idx,
 						"type": get_socket_type(m)
 					})
 				return true
@@ -279,6 +299,20 @@ func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 
 	_seal_single_socket(target_idx)
 	return false
+
+func is_room_piece(piece_inst: Node3D) -> bool:
+	if not piece_inst:
+		return false
+	var pname = piece_inst.name.to_lower()
+	var spath = piece_inst.scene_file_path.to_lower()
+	return ("room" in pname or "room" in spath or "entrance" in pname or "entrance" in spath)
+
+func cand_is_stair_piece(piece_inst: Node3D) -> bool:
+	if not piece_inst:
+		return false
+	var pname = piece_inst.name.to_lower()
+	var spath = piece_inst.scene_file_path.to_lower()
+	return ("stair" in pname or "stair" in spath)
 
 func _seal_single_socket(socket_idx: int) -> void:
 	if socket_idx < 0 or socket_idx >= open_sockets.size():
@@ -322,7 +356,7 @@ func _seal_single_socket(socket_idx: int) -> void:
 	open_sockets.remove_at(socket_idx)
 
 func generate_dungeon() -> void:
-	print("Începe generarea procedurală pe socket-uri (Single Floor)...")
+	print("Începe generarea procedurală pe socket-uri (3 Etaje cu buffer 1m)...")
 	spawned_pieces.clear()
 	placed_aabbs.clear()
 	open_sockets.clear()
@@ -352,7 +386,6 @@ func generate_dungeon() -> void:
 			"type": get_socket_type(marker)
 		})
 
-	# 2. Generare trunchi WIDE
 	var wide_corridors_pool = [
 		CORRIDOR_WIDE_SCENE,
 		CORRIDOR_WIDE_CORNER_SCENE,
@@ -360,74 +393,93 @@ func generate_dungeon() -> void:
 		CORRIDOR_WIDE_INTERSECTION_SCENE
 	]
 
-	var wide_trunk_target = 5
-	var wide_trunk_count = 0
-	var attempts = 0
-
-	while wide_trunk_count < wide_trunk_target and attempts < 25:
-		attempts += 1
-		var wide_socket_indices: Array[int] = []
-		for i in range(open_sockets.size()):
-			if open_sockets[i]["type"] == "WIDE":
-				wide_socket_indices.append(i)
-
-		if wide_socket_indices.is_empty():
-			break
-
-		var target_idx = wide_socket_indices.pick_random()
-		if try_place_piece_at_socket(target_idx, wide_corridors_pool):
-			wide_trunk_count += 1
-
-	# 3. Tranziții WIDE -> NARROW
-	attempts = 0
-	while attempts < 20:
-		attempts += 1
-		var wide_socket_idx = -1
-		for i in range(open_sockets.size()):
-			if open_sockets[i]["type"] == "WIDE":
-				wide_socket_idx = i
-				break
-
-		if wide_socket_idx == -1:
-			break
-
-		if not try_place_piece_at_socket(wide_socket_idx, [CORRIDOR_TRANSITION_SCENE]):
-			break
-
-	# 4. Generare Piese NARROW & Camere
 	var narrow_and_rooms_pool = [
 		CORRIDOR_SCENE, CORRIDOR_CORNER_SCENE, CORRIDOR_JUNCTION_SCENE, CORRIDOR_INTERSECTION_SCENE,
 		ROOM_SMALL_SCENE, ROOM_SMALL_2_SCENE, ROOM_CORNER_SCENE, ROOM_LARGE_SCENE, ROOM_LARGE_2_SCENE, ROOM_WIDE_SCENE, ROOM_WIDE_2_SCENE
 	]
 
-	var placed_piece_count = 0
-	attempts = 0
-	while placed_piece_count < pieces_per_floor and attempts < 200:
-		attempts += 1
-		if open_sockets.is_empty():
-			break
+	# Generăm pe etaje (Floor 0 -> Floor 1 -> Floor 2)
+	for current_floor in range(max_floors):
+		print("--- Generare Etaj %d ---" % current_floor)
 
-		# O dată la ceva timp plasăm o scară pentru varietate vizuală (maxim 2 scări)
-		if stairs_placed_count < 2 and randf() < 0.15:
-			var target_idx = randi() % open_sockets.size()
-			if try_place_piece_at_socket(target_idx, [STAIRS_SCENE, STAIRS_WIDE_SCENE]):
-				stairs_placed_count += 1
-				placed_piece_count += 1
-				if open_sockets.is_empty():
+		# A. Generare trunchi WIDE pe etajul curent
+		var wide_trunk_target = 4
+		var wide_trunk_count = 0
+		var attempts = 0
+
+		while wide_trunk_count < wide_trunk_target and attempts < 20:
+			attempts += 1
+			var floor_wide_indices: Array[int] = []
+			for i in range(open_sockets.size()):
+				if open_sockets[i]["floor"] == current_floor and open_sockets[i]["type"] == "WIDE":
+					floor_wide_indices.append(i)
+
+			if floor_wide_indices.is_empty():
+				break
+
+			var target_idx = floor_wide_indices.pick_random()
+			if try_place_piece_at_socket(target_idx, wide_corridors_pool):
+				wide_trunk_count += 1
+
+		# B. Tranziții WIDE -> NARROW pe etajul curent
+		attempts = 0
+		while attempts < 15:
+			attempts += 1
+			var wide_socket_idx = -1
+			for i in range(open_sockets.size()):
+				if open_sockets[i]["floor"] == current_floor and open_sockets[i]["type"] == "WIDE":
+					wide_socket_idx = i
 					break
-				continue
 
-		if open_sockets.is_empty():
-			break
+			if wide_socket_idx == -1:
+				break
 
-		var target_idx = randi() % open_sockets.size()
-		if try_place_piece_at_socket(target_idx, narrow_and_rooms_pool):
-			placed_piece_count += 1
+			if not try_place_piece_at_socket(wide_socket_idx, [CORRIDOR_TRANSITION_SCENE]):
+				break
 
-	# 5. Sigilare socket-uri rămase deschise
+		# C. Generare piese NARROW & Camere per etaj (~30 piese per etaj)
+		var floor_placed_count = 0
+		attempts = 0
+		while floor_placed_count < pieces_per_floor and attempts < 150:
+			attempts += 1
+
+			var floor_socket_indices: Array[int] = []
+			for i in range(open_sockets.size()):
+				if open_sockets[i]["floor"] == current_floor:
+					floor_socket_indices.append(i)
+
+			if floor_socket_indices.is_empty():
+				break
+
+			var target_idx = floor_socket_indices.pick_random()
+			if try_place_piece_at_socket(target_idx, narrow_and_rooms_pool):
+				floor_placed_count += 1
+
+		# D. Plasare Scară către etajul următor (dacă mai avem etaje de generat)
+		if current_floor < max_floors - 1:
+			var stair_placed = false
+			attempts = 0
+			while not stair_placed and attempts < 30:
+				attempts += 1
+				var floor_socket_indices: Array[int] = []
+				for i in range(open_sockets.size()):
+					if open_sockets[i]["floor"] == current_floor:
+						floor_socket_indices.append(i)
+
+				if floor_socket_indices.is_empty():
+					break
+
+				var target_idx = floor_socket_indices.pick_random()
+				var stair_pool = [STAIRS_SCENE, STAIRS_WIDE_SCENE]
+				if try_place_piece_at_socket(target_idx, stair_pool):
+					stair_placed = true
+					stairs_placed_count += 1
+					print("Scară plasată de la Etajul %d la Etajul %d" % [current_floor, current_floor + 1])
+
+	# Sigilare socket-uri rămase deschise
 	_seal_all_open_sockets()
 
-	print("Dungeon generat pe socket-uri cu succes! Total piese plasate: %d" % spawned_pieces.size())
+	print("Dungeon generat cu succes! Total piese plasate: %d" % spawned_pieces.size())
 
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
