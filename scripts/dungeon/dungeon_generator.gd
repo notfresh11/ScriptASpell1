@@ -64,7 +64,7 @@ func generate_dungeon() -> void:
 	print("Începe generarea procedurală SimpleDungeons...")
 	generate_on_ready = false
 	voxel_scale = Vector3(10, 4, 10)
-	dungeon_size = Vector3i(10, 3, 10)
+	dungeon_size = Vector3i(12, 3, 12)
 	corridor_room_scene = CORRIDOR_INTERSECTION_SCENE
 	room_scenes = [
 		ENTRANCE_SCENE,
@@ -77,20 +77,179 @@ func generate_dungeon() -> void:
 		ROOM_WIDE_2_SCENE,
 		STAIRS_SCENE,
 		STAIRS_WIDE_SCENE,
-		CORRIDOR_SCENE,
-		CORRIDOR_CORNER_SCENE,
-		CORRIDOR_WIDE_SCENE
+		CORRIDOR_TRANSITION_SCENE,
+		CORRIDOR_WIDE_SCENE,
+		CORRIDOR_WIDE_CORNER_SCENE,
+		CORRIDOR_WIDE_INTERSECTION_SCENE,
+		CORRIDOR_WIDE_JUNCTION_SCENE
 	]
 
 	generate()
 
 func _on_done_generating() -> void:
-	print("SimpleDungeons a finalizat generarea dungeon-ului!")
+	print("SimpleDungeons a generat structura de bază. Aplicăm post-procesarea coridoarelor cu toate piesele...")
+	post_process_corridors()
+
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
 		if get_parent() == get_tree().root:
 			await get_tree().create_timer(0.2).timeout
 			spawn_all_players()
+
+# --- POST-PROCESARE CORIDOARE (OPȚIUNEA B + TOATE PIESELE) ---
+func post_process_corridors() -> void:
+	if not rooms_container:
+		return
+
+	# Harta de acces rapid pe grilă: Vector3i pos -> Node
+	var grid_occupancy: Dictionary = {}
+	var corridor_positions: Array[Vector3i] = []
+
+	for room in rooms_container.get_children():
+		if room is DungeonRoom3D:
+			var pos = room.get_grid_pos()
+			grid_occupancy[pos] = room
+			if "corridor_intersection" in room.name.to_lower():
+				corridor_positions.append(pos)
+
+	if corridor_positions.is_empty():
+		return
+
+	# Direcții cardinale 2D (Vector3i pe Y=0)
+	var dirs = {
+		"N": Vector3i(0, 0, -1),
+		"E": Vector3i(1, 0, 0),
+		"S": Vector3i(0, 0, 1),
+		"W": Vector3i(-1, 0, 0)
+	}
+
+	# Procesăm fiecare poziție de coridor generat
+	for c_pos in corridor_positions:
+		var current_corridor = grid_occupancy.get(c_pos)
+		if not current_corridor or not is_instance_valid(current_corridor):
+			continue
+
+		var connected_dirs: Array[String] = []
+
+		for d_name in dirs.keys():
+			var neighbor_pos = c_pos + dirs[d_name]
+			if grid_occupancy.has(neighbor_pos):
+				var neighbor_room = grid_occupancy[neighbor_pos]
+				if has_connection_between(c_pos, neighbor_pos, current_corridor, neighbor_room):
+					connected_dirs.append(d_name)
+
+		var conn_count = connected_dirs.size()
+		var target_scene: PackedScene = CORRIDOR_SCENE
+		var target_rotation: int = 0
+
+		# Verificăm dacă piesa se învecinează cu un coridor lat (WIDE)
+		var is_near_wide = false
+		for d_name in connected_dirs:
+			var neighbor = grid_occupancy.get(c_pos + dirs[d_name])
+			if neighbor and "wide" in neighbor.name.to_lower():
+				is_near_wide = true
+				break
+
+		if is_near_wide:
+			# Folosim piese din seria WIDE sau TRANSITION
+			if conn_count == 1:
+				target_scene = CORRIDOR_WIDE_END_SCENE
+				match connected_dirs[0]:
+					"S": target_rotation = 0
+					"W": target_rotation = 1
+					"N": target_rotation = 2
+					"E": target_rotation = 3
+			elif conn_count == 2:
+				if ("N" in connected_dirs and "S" in connected_dirs) or ("E" in connected_dirs and "W" in connected_dirs):
+					target_scene = CORRIDOR_TRANSITION_SCENE
+					target_rotation = 0 if ("N" in connected_dirs and "S" in connected_dirs) else 1
+				else:
+					target_scene = CORRIDOR_WIDE_CORNER_SCENE
+					if "N" in connected_dirs and "E" in connected_dirs: target_rotation = 0
+					elif "E" in connected_dirs and "S" in connected_dirs: target_rotation = 1
+					elif "S" in connected_dirs and "W" in connected_dirs: target_rotation = 2
+					elif "W" in connected_dirs and "N" in connected_dirs: target_rotation = 3
+			elif conn_count == 3:
+				target_scene = CORRIDOR_WIDE_JUNCTION_SCENE
+				if not "W" in connected_dirs: target_rotation = 0
+				elif not "N" in connected_dirs: target_rotation = 1
+				elif not "E" in connected_dirs: target_rotation = 2
+				elif not "S" in connected_dirs: target_rotation = 3
+			else:
+				target_scene = CORRIDOR_WIDE_INTERSECTION_SCENE
+				target_rotation = 0
+		else:
+			# Folosim piese înguste NARROW
+			if conn_count == 1:
+				target_scene = CORRIDOR_END_SCENE
+				match connected_dirs[0]:
+					"S": target_rotation = 0
+					"W": target_rotation = 1
+					"N": target_rotation = 2
+					"E": target_rotation = 3
+			elif conn_count == 2:
+				if ("N" in connected_dirs and "S" in connected_dirs) or ("E" in connected_dirs and "W" in connected_dirs):
+					target_scene = CORRIDOR_SCENE
+					target_rotation = 0 if ("N" in connected_dirs and "S" in connected_dirs) else 1
+				else:
+					target_scene = CORRIDOR_CORNER_SCENE
+					if "N" in connected_dirs and "E" in connected_dirs: target_rotation = 0
+					elif "E" in connected_dirs and "S" in connected_dirs: target_rotation = 1
+					elif "S" in connected_dirs and "W" in connected_dirs: target_rotation = 2
+					elif "W" in connected_dirs and "N" in connected_dirs: target_rotation = 3
+			elif conn_count == 3:
+				target_scene = CORRIDOR_JUNCTION_SCENE
+				if not "W" in connected_dirs: target_rotation = 0
+				elif not "N" in connected_dirs: target_rotation = 1
+				elif not "E" in connected_dirs: target_rotation = 2
+				elif not "S" in connected_dirs: target_rotation = 3
+			else:
+				target_scene = CORRIDOR_INTERSECTION_SCENE
+				target_rotation = 0
+
+		# Înlocuim piesa existentă și actualizăm harta grid_occupancy cu noul obiect instanțiat
+		var new_room = replace_corridor_piece(current_corridor, target_scene, target_rotation)
+		if new_room:
+			grid_occupancy[c_pos] = new_room
+
+func is_main_room(room: DungeonRoom3D) -> bool:
+	var r_name = room.name.to_lower()
+	return not ("corridor" in r_name)
+
+func has_connection_between(_c_pos: Vector3i, _n_pos: Vector3i, room_a: DungeonRoom3D, room_b: DungeonRoom3D) -> bool:
+	if not room_a or not room_b:
+		return false
+	var doors_a = room_a.get_doors()
+	var doors_b = room_b.get_doors()
+	if doors_a.is_empty() or doors_b.is_empty():
+		return true
+
+	for door_a in doors_a:
+		for door_b in doors_b:
+			if door_a.fits_other_door(door_b):
+				return true
+
+	if "corridor" in room_b.name.to_lower():
+		return true
+
+	return false
+
+func replace_corridor_piece(old_corridor: DungeonRoom3D, new_scene: PackedScene, rotations: int) -> DungeonRoom3D:
+	if not old_corridor or not is_instance_valid(old_corridor):
+		return null
+
+	var pos = old_corridor.get_grid_pos()
+	var new_inst: DungeonRoom3D = new_scene.instantiate()
+	new_inst.dungeon_generator = self
+	new_inst.voxel_scale = voxel_scale
+	new_inst.room_rotations = rotations
+
+	rooms_container.add_child(new_inst, true)
+	new_inst.set_position_by_grid_pos(pos)
+	new_inst.owner = rooms_container.owner
+
+	old_corridor.queue_free()
+	return new_inst
 
 func get_entrance_position() -> Vector3:
 	if rooms_container:
