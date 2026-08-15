@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c5stairsstraight1"]
+[gd_scene format=3 uid="uid://2dim8rvuamvs"]
 
 [ext_resource type="Script" uid="uid://c8nbaca5y8kiu" path="res://scripts/dungeon/dungeon_torch.gd" id="1_dungeon_torch"]
 
