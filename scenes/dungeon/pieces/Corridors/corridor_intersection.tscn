@@ -10,3 +10,21 @@ albedo_texture = ExtResource("2_4l401")
 
 [node name="corridor-intersection" parent="." index="0" unique_id=2017548096]
 surface_material_override/0 = SubResource("StandardMaterial3D_xv8uo")
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_Narrow_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_East" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2, 0, 0)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_South" type="Marker3D" parent="Exits"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_West" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -2, 0, 0)
+metadata/socket_type = "NARROW"

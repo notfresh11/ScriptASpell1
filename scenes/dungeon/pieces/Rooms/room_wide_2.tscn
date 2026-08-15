@@ -10,3 +10,9 @@ albedo_texture = ExtResource("2_8fmqd")
 
 [node name="room-wide-variation" parent="." index="0" unique_id=1896480485]
 surface_material_override/0 = SubResource("StandardMaterial3D_8wgsw")
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_Narrow_South" type="Marker3D" parent="Exits"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 6)
+metadata/socket_type = "NARROW"

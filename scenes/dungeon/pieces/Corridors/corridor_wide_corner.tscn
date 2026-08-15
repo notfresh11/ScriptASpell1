@@ -10,3 +10,13 @@ albedo_texture = ExtResource("2_h6j0y")
 
 [node name="corridor-wide-corner" parent="." index="0" unique_id=2107973205]
 surface_material_override/0 = SubResource("StandardMaterial3D_ji3hh")
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_Wide_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+metadata/socket_type = "WIDE"
+
+[node name="Exit_Wide_East" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 4, 0, 0)
+metadata/socket_type = "WIDE"
