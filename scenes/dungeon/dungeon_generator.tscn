@@ -26,7 +26,6 @@ environment = SubResource("Environment_dungeon")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1772083911]
 transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
 light_color = Color(0.6, 0.7, 0.8, 1)
-light_energy = 0.3
 shadow_enabled = true
 
 [node name="Pieces" type="Node3D" parent="." unique_id=1108301259]

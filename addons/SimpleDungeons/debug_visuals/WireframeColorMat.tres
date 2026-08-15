@@ -1,4 +1,4 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://pq2fqq4ophsy"]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://pq2fqq4ophsy"]
 
 [sub_resource type="Shader" id="Shader_xtf8b"]
 resource_local_to_scene = true
