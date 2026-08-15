@@ -503,14 +503,15 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 
 ---
 
-### SESIUNEA 9: Revenire la Algoritmul Propriu pe Bază de Socket-uri (Single Floor + Scări)
+### SESIUNEA 9: Revenire la Algoritmul Propriu pe Bază de Socket-uri (Multi-Floor + Reguli Camere)
 
 #### A. Ce s-a realizat în această sesiune (Project State)
 1. **Revenire la Algoritmul Custom de Socket-uri (Socket Matching):**
    - La cererea expresă a utilizatorului, am renunțat la plugin-ul `SimpleDungeons` și am restaurat algoritmul nostru nativ din `dungeon_generator.gd` bazat pe socket-uri (`NARROW` vs `WIDE`).
    - Algoritmul oferă un trunchi principal masiv (`WIDE`), tranziții naturale către coridoare înguste (`NARROW`) și plasare organică de încăperi, oferind un stil autentic de Pilgrim / Kletka.
-2. **Configurare Single Floor cu Suport de Scări:**
-   - S-a configurat generarea pe un singur etaj principal (`max_floors = 1`), menținând totuși plasarea opțională a 1-2 piese de scări (`stairs.tscn` / `stairs_wide.tscn`) pentru varietate vizuală și explorare.
+2. **Generare Multi-Floor pe 3 Etaje (`max_floors = 3`) & Reguli Camere:**
+   - S-a configurat generarea pe 3 etaje (Floor 0, Floor 1, Floor 2) cu câte ~30 de piese per etaj, conectate prin scări ancorate pe socket-ul superior (`Top`).
+   - S-a implementat o regulă strictă care interzice conectarea directă a unei camere la o altă cameră (`if parent_is_room and cand_is_room: continue`).
 3. **Integrare Toate Cele 21 de Piese:**
    - Toate cele 21 de scene de piese (camere mici, mari, colțuri, coridoare, intersecții, T-uri, tranziții și scări) sunt incluse și folosite activ în pool-urile de generare.
 
