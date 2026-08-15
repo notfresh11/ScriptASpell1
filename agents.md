@@ -503,6 +503,21 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 
 ---
 
+### SESIUNEA 9: Integrare Completă SimpleDungeons (Voxel AStar 3D Dungeon Generator)
+
+#### A. Ce s-a realizat în această sesiune (Project State)
+1. **Migrare la Plugin-ul SimpleDungeons (`DungeonGenerator3D`):**
+   - Inlocuit complet algoritmul custom cu cel furnizat de addon-ul `SimpleDungeons` (`DungeonGenerator3D`).
+   - Toate cele 21 de piese din `scenes/dungeon/pieces/` (camere, coridoare, scări) au fost convertite în prefabs `DungeonRoom3D` definind dimensiuni de voxel (`size_in_voxels`) și noduri de ușă (`DOOR` / `DOOR?`).
+2. **Integrare Sincronizată pe Multiplayer:**
+   - `dungeon_generator.gd` extinde `DungeonGenerator3D` și suprascrie `create_or_recreate_rooms_container()` pentru a seta `$PieceSpawner.spawn_path` înainte ca camerele să fie instanțiate în arbore.
+   - Fiecare cameră unvirtualizată folosește `into_parent.add_child(inst, true)` pentru a forța generarea de nume valide în rețea.
+3. **Sincronizare Uși & Spawning Loot:**
+   - `map1.gd` ascultă semnalul `done_generating` emisi de `dungeon_generator`, poziționează ușa interioară la camera de intrare (`Entrance`) și sincronizează destinațiile prin RPC pe toți clienții.
+   - Spawning-ul de loot se execută automat pe server la finalizarea generării.
+
+---
+
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
 
 Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.

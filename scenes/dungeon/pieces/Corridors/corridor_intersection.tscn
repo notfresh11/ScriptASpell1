@@ -2,29 +2,27 @@
 
 [ext_resource type="PackedScene" uid="uid://bn6ht3q743q04" path="res://assets/FBX format/corridor-intersection.fbx" id="1_iiwka"]
 [ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_4l401"]
+[ext_resource type="Script" path="res://addons/SimpleDungeons/DungeonRoom3D.gd" id="3_dungeon_room"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xv8uo"]
 albedo_texture = ExtResource("2_4l401")
 
 [node name="corridor-intersection" unique_id=83926191 instance=ExtResource("1_iiwka")]
+script = ExtResource("3_dungeon_room")
+size_in_voxels = Vector3i(1, 1, 1)
+voxel_scale = Vector3(10, 4, 10)
 
 [node name="corridor-intersection" parent="." index="0" unique_id=2017548096]
 surface_material_override/0 = SubResource("StandardMaterial3D_xv8uo")
 
-[node name="Exits" type="Node3D" parent="." index="1" unique_id=2056165133]
+[node name="DOOR?_North" type="Node3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
 
-[node name="Exit_Narrow_North" type="Marker3D" parent="Exits" index="0" unique_id=1489127361]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
-metadata/socket_type = "NARROW"
+[node name="DOOR?_East" type="Node3D" parent="." index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
 
-[node name="Exit_Narrow_East" type="Marker3D" parent="Exits" index="1" unique_id=517846120]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2, 0, 0)
-metadata/socket_type = "NARROW"
+[node name="DOOR?_South" type="Node3D" parent="." index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 
-[node name="Exit_Narrow_South" type="Marker3D" parent="Exits" index="2" unique_id=1251622445]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
-metadata/socket_type = "NARROW"
-
-[node name="Exit_Narrow_West" type="Marker3D" parent="Exits" index="3" unique_id=1177479079]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -2, 0, 0)
-metadata/socket_type = "NARROW"
+[node name="DOOR?_West" type="Node3D" parent="." index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 0)
