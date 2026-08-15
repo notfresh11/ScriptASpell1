@@ -1,7 +1,8 @@
 # scripts/dungeon/dungeon_generator.gd
 extends Node3D
 
-@export var num_pieces: int = 25 # Numărul de piese dintr-o sesiune de dungeon
+@export var pieces_per_floor: int = 20 # Numărul de piese per nivel/etaj
+@export var max_floors: int = 3 # Numărul maxim de etaje ale dungeon-ului
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
 
 # Preîncărcăm piesele modulare + Loot
@@ -139,65 +140,119 @@ func generate_dungeon() -> void:
 	var available_flat_scenes = [HALLWAY_SCENE, CORNER_SCENE, T_JUNCTION_SCENE, FOUR_WAY_SCENE, ROOM_SCENE]
 	var stair_scenes = [STAIRS_STRAIGHT_SCENE, STAIRS_ZIGZAG_SCENE]
 
-	var pieces_placed_count = 1
+	var floor_piece_counts: Dictionary = { 0: 1 } # Level Y -> Numar de piese
 
-	while not open_frontiers.is_empty() and pieces_placed_count < num_pieces:
-		var frontier = open_frontiers.pop_front()
-		var source_cell: Vector3i = frontier["grid_pos"]
-		var step_dir: Vector3i = frontier["dir"]
+	for floor_index in range(max_floors):
+		var current_floor_y = -floor_index
 
-		var target_cell: Vector3i = source_cell + step_dir
+		# 1. Expandăm doar piese plane pe etajul curent până atingem pieces_per_floor
+		while true:
+			var current_count = floor_piece_counts.get(current_floor_y, 0)
+			if current_count >= pieces_per_floor:
+				break
 
-		if grid_occupied.has(target_cell):
-			continue
+			# Căutăm o frontieră pe etajul curent
+			var idx_to_use = -1
+			for i in range(open_frontiers.size()):
+				if open_frontiers[i]["grid_pos"].y == current_floor_y:
+					idx_to_use = i
+					break
 
-		var use_stairs = (randf() < 0.20) and abs(target_cell.y) <= 2
-		var chosen_scene: PackedScene = null
+			if idx_to_use == -1:
+				# Nu mai sunt frontiere pe acest etaj
+				break
 
-		if use_stairs:
-			chosen_scene = stair_scenes.pick_random()
-		else:
-			chosen_scene = available_flat_scenes.pick_random()
+			var frontier = open_frontiers.pop_at(idx_to_use)
+			var source_cell: Vector3i = frontier["grid_pos"]
+			var step_dir: Vector3i = frontier["dir"]
+			var target_cell: Vector3i = source_cell + step_dir
 
-		var valid_rots = get_socket_rotations_for_entrance(chosen_scene, step_dir)
-		if valid_rots.is_empty():
-			chosen_scene = HALLWAY_SCENE
-			valid_rots = get_socket_rotations_for_entrance(chosen_scene, step_dir)
-
-		if valid_rots.is_empty():
-			continue
-
-		var chosen_rot = valid_rots.pick_random()
-
-		var piece_inst = chosen_scene.instantiate()
-		piece_inst.name = "Piece_%d" % pieces_placed_count
-
-		var actual_target_cell = target_cell
-
-		piece_inst.position = grid_to_world(actual_target_cell)
-		piece_inst.rotation_degrees.y = chosen_rot * -90.0
-
-		pieces_node.add_child(piece_inst, true)
-		spawned_pieces.append(piece_inst)
-		grid_occupied[actual_target_cell] = piece_inst
-		pieces_placed_count += 1
-
-		var current_exits = get_exits_for_piece(chosen_scene, chosen_rot)
-		var entry_dir_used = -step_dir
-
-		for ex_dir in current_exits:
-			if ex_dir == entry_dir_used:
+			if grid_occupied.has(target_cell):
 				continue
 
-			# Dacă piesa este o scară, ieșirea opusă (Exit_North) duce la nivelul inferior Y - 1!
-			var next_grid_cell = actual_target_cell
-			if chosen_scene in stair_scenes:
-				next_grid_cell.y -= 1
+			var chosen_scene: PackedScene = available_flat_scenes.pick_random()
+			var valid_rots = get_socket_rotations_for_entrance(chosen_scene, step_dir)
+			if valid_rots.is_empty():
+				chosen_scene = HALLWAY_SCENE
+				valid_rots = get_socket_rotations_for_entrance(chosen_scene, step_dir)
 
-			open_frontiers.append({
-				"grid_pos": next_grid_cell,
-				"dir": ex_dir
-			})
+			if valid_rots.is_empty():
+				continue
+
+			var chosen_rot = valid_rots.pick_random()
+			var piece_inst = chosen_scene.instantiate()
+			piece_inst.name = "Piece_%d_%d" % [current_floor_y, current_count]
+			piece_inst.position = grid_to_world(target_cell)
+			piece_inst.rotation_degrees.y = chosen_rot * -90.0
+
+			pieces_node.add_child(piece_inst, true)
+			spawned_pieces.append(piece_inst)
+			grid_occupied[target_cell] = piece_inst
+
+			floor_piece_counts[current_floor_y] = current_count + 1
+
+			var current_exits = get_exits_for_piece(chosen_scene, chosen_rot)
+			var entry_dir_used = -step_dir
+
+			for ex_dir in current_exits:
+				if ex_dir == entry_dir_used:
+					continue
+				open_frontiers.append({
+					"grid_pos": target_cell,
+					"dir": ex_dir
+				})
+
+		# 2. Dacă mai avem etaje de generat, plasăm o scară de coborâre la următorul etaj
+		if floor_index < max_floors - 1:
+			var stair_placed = false
+			# Încercăm să găsim o frontieră disponibilă pe etajul curent pentru a plasa o scară
+			var frontier_indices: Array[int] = []
+			for i in range(open_frontiers.size()):
+				if open_frontiers[i]["grid_pos"].y == current_floor_y:
+					frontier_indices.append(i)
+
+			frontier_indices.shuffle()
+
+			for f_idx in frontier_indices:
+				var frontier = open_frontiers[f_idx]
+				var source_cell: Vector3i = frontier["grid_pos"]
+				var step_dir: Vector3i = frontier["dir"]
+				var target_cell: Vector3i = source_cell + step_dir
+
+				if grid_occupied.has(target_cell):
+					continue
+
+				var stair_scene: PackedScene = stair_scenes.pick_random()
+				var valid_rots = get_socket_rotations_for_entrance(stair_scene, step_dir)
+				if valid_rots.is_empty():
+					continue
+
+				var chosen_rot = valid_rots.pick_random()
+				var piece_inst = stair_scene.instantiate()
+				piece_inst.name = "Stairs_%d" % current_floor_y
+				piece_inst.position = grid_to_world(target_cell)
+				piece_inst.rotation_degrees.y = chosen_rot * -90.0
+
+				pieces_node.add_child(piece_inst, true)
+				spawned_pieces.append(piece_inst)
+				grid_occupied[target_cell] = piece_inst
+
+				open_frontiers.remove_at(f_idx)
+				stair_placed = true
+
+				# Adăugăm noua frontieră la etajul inferior (current_floor_y - 1)
+				var current_exits = get_exits_for_piece(stair_scene, chosen_rot)
+				var entry_dir_used = -step_dir
+				for ex_dir in current_exits:
+					if ex_dir == entry_dir_used:
+						continue
+					var next_grid_cell = target_cell
+					next_grid_cell.y -= 1
+					open_frontiers.append({
+						"grid_pos": next_grid_cell,
+						"dir": ex_dir
+					})
+				break
 
 	# 2. Sigilăm TOATE ieșirile libere rămase pe grid cu DEAD END (Pereți de capăt)
 	_seal_all_open_exits(open_frontiers)
