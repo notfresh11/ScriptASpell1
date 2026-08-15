@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c5stairszigzag1"]
+[gd_scene format=3 uid="uid://drytww0ddvb7s"]
 
 [ext_resource type="Script" uid="uid://c8nbaca5y8kiu" path="res://scripts/dungeon/dungeon_torch.gd" id="1_dungeon_torch"]
 
@@ -10,9 +10,9 @@ roughness = 0.8
 albedo_color = Color(0.15, 0.15, 0.18, 1)
 roughness = 0.9
 
-[node name="StairsZigzagPiece" type="Node3D"]
+[node name="StairsZigzagPiece" type="Node3D" unique_id=1768119561]
 
-[node name="Floor_Lower" type="CSGBox3D" parent="."]
+[node name="Floor_Lower" type="CSGBox3D" parent="." unique_id=2059884917]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 3.5)
 use_collision = true
 size = Vector3(10, 0.2, 3)
@@ -27,7 +27,7 @@ material = SubResource("StandardMaterial3D_floor")
 [node name="Landing" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0, 1.9, -1.0)
 use_collision = true
-size = Vector3(4, 0.2, 2.5)
+size = Vector3(9.626831, 0.2, 2.5)
 material = SubResource("StandardMaterial3D_floor")
 
 [node name="Ramp2" type="CSGBox3D" parent="."]
@@ -61,10 +61,10 @@ light_energy = 1.2
 omni_range = 8.0
 script = ExtResource("1_dungeon_torch")
 
-[node name="Exits" type="Node3D" parent="."]
+[node name="Exits" type="Node3D" parent="." unique_id=1522857583]
 
 [node name="Exit_North" type="Marker3D" parent="Exits"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.0, -5)
 
-[node name="Exit_South" type="Marker3D" parent="Exits"]
+[node name="Exit_South" type="Marker3D" parent="Exits" unique_id=165434692]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 5)
