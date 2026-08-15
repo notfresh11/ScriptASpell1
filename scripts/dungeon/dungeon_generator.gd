@@ -1,8 +1,8 @@
 # scripts/dungeon/dungeon_generator.gd
 extends Node3D
 
-@export var max_floors: int = 3 # Nivelul de etaje dorite în dungeon
-@export var pieces_per_floor: int = 8 # Numărul de piese pe fiecare etaj orizontal
+@export var max_floors: int = 3 # Numărul de etaje verticale ale dungeon-ului
+@export var pieces_per_floor: int = 10 # Numărul de piese de pe FIECARE etaj orizontal
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
 
 # Ponderi de plasare tweakabile din Inspector
@@ -33,7 +33,7 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 @onready var loot_node: Node3D = $Loot
 @onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 
-# Piese instanțiate pe etaje
+# Piese instanțiate
 var spawned_pieces: Array[Node3D] = []
 
 func _ready() -> void:
@@ -63,19 +63,19 @@ func get_piece_exit_markers(piece_instance: Node3D) -> Array[Marker3D]:
 				markers.append(child as Marker3D)
 	return markers
 
-# Verificare suprapunere pe același nivel / etaj (folosind distanța orizontală 2D sau offset Y)
+# Verificare suprapunere fizică (Overlap Check pe distanță 3D)
 func check_piece_overlap(new_pos: Vector3) -> bool:
 	for existing in spawned_pieces:
-		# Verificăm dacă suntem pe același nivel Y (diferență Y < 2.0m) și pe aceeași poziție XZ
+		# Verificăm dacă suntem pe același etaj Y (diferență Y < 4.0m) și la distanță 2D < 7.0m
 		var y_diff = abs(new_pos.y - existing.global_position.y)
-		if y_diff < 2.5:
+		if y_diff < 4.0:
 			var pos_2d_new = Vector2(new_pos.x, new_pos.z)
 			var pos_2d_existing = Vector2(existing.global_position.x, existing.global_position.z)
 			if pos_2d_new.distance_to(pos_2d_existing) < 7.0:
 				return true
 	return false
 
-# Selecție ponderată în funcție de adâncime
+# Selecție ponderată
 func select_weighted_horizontal_scene(candidates: Array, depth_ratio: float) -> PackedScene:
 	if candidates.is_empty():
 		return null
@@ -99,7 +99,7 @@ func select_weighted_horizontal_scene(candidates: Array, depth_ratio: float) -> 
 			return candidates[i]
 	return candidates[0]
 
-# --- ALGORITMUL DE GENERARE STRUCTURATĂ PE ETAJE (FLOOR-BASED GENERATION) ---
+# --- ALGORITMUL DE GENERARE STRUCTURATĂ PE ETAJE (DESCENDENT) ---
 func generate_dungeon() -> void:
 	print("Începe generarea procedurală pe etaje (%d etaje, %d piese/etaj)..." % [max_floors, pieces_per_floor])
 
@@ -108,7 +108,7 @@ func generate_dungeon() -> void:
 	for child in pieces_node.get_children():
 		child.queue_free()
 
-	# Piesa de Intrare (Entrance)
+	# Piesa de Intrare (Entrance) rămâne FIXĂ sus la (0, 0, 0)
 	var entrance_instance: Node3D = ENTRANCE_SCENE.instantiate()
 	entrance_instance.name = "Piece_Entrance"
 	entrance_instance.position = Vector3.ZERO
@@ -123,11 +123,10 @@ func generate_dungeon() -> void:
 			"global_transform": entrance_instance.global_transform * entrance_markers[0].transform
 		}
 
-	# Piese orizontale normale (fără scări)
 	var horizontal_scenes = [HALLWAY_SCENE, CORNER_SCENE, T_JUNCTION_SCENE, FOUR_WAY_SCENE, ROOM_SCENE]
 	var stair_scenes = [STAIRS_STRAIGHT_SCENE, STAIRS_ZIGZAG_SCENE]
 
-	# Bucle pe fiecare etaj (Floor)
+	# Generăm fiecare etaj în parte
 	for floor_idx in range(max_floors):
 		print("--- Generare Etaj %d ---" % (floor_idx + 1))
 		var floor_exits_queue: Array[Dictionary] = []
@@ -136,7 +135,7 @@ func generate_dungeon() -> void:
 
 		var floor_piece_count = 0
 
-		# 1. Generăm piesele orizontale pentru etajul curent
+		# 1. Generăm piesele orizontale ale etajului curent
 		while not floor_exits_queue.is_empty() and floor_piece_count < pieces_per_floor:
 			var exit_info = floor_exits_queue.pop_front()
 			var exit_trans: Transform3D = exit_info["global_transform"]
@@ -169,12 +168,9 @@ func generate_dungeon() -> void:
 					var child_pos = exit_pos - child_basis * s_in.position
 
 					if check_piece_overlap(child_pos):
-						# Dacă există suprapunere și loop_chance e activat, verificăm dacă putem lăsa conexiunea activă fără piesa nouă
-						if randf() < loop_chance:
-							print("Formare buclă/circuit pe etajul %d" % floor_idx)
 						continue
 
-					# Plasare reușită!
+					# Plasare reușită pe etaj!
 					cand_inst.name = "Piece_Floor%d_%d" % [floor_idx, spawned_pieces.size()]
 					cand_inst.position = child_pos
 					cand_inst.basis = child_basis
@@ -202,7 +198,7 @@ func generate_dungeon() -> void:
 			if not piece_placed and not floor_exits_queue.is_empty():
 				_seal_exit_with_dead_end(exit_trans)
 
-		# 2. La finalul etajului curent (dacă nu e ultimul etaj), plasăm OBLIGATORIU o scară spre etajul următor!
+		# 2. Dacă nu este ultimul etaj, adăugăm OBLIGATORIU o scară care coboară (-6m Y mai jos) spre etajul următor
 		if floor_idx < max_floors - 1 and not floor_exits_queue.is_empty():
 			var stair_exit_info = floor_exits_queue.pop_front()
 			var exit_trans: Transform3D = stair_exit_info["global_transform"]
@@ -214,7 +210,7 @@ func generate_dungeon() -> void:
 				var stair_inst = stair_scene.instantiate()
 				var sockets = get_piece_exit_markers(stair_inst)
 
-				# Socket-ul 1 este intrarea (Exit_South la nivel Y=0)
+				# Socket-ul de sus/intrare al scării este Exit_South la Y=0.0m (sockets[1])
 				var s_in = sockets[1] if sockets.size() > 1 else sockets[0]
 				var target_dir = -(-exit_trans.basis.z.normalized())
 				var local_dir = -s_in.transform.basis.z.normalized()
@@ -235,7 +231,7 @@ func generate_dungeon() -> void:
 				spawned_pieces.append(stair_inst)
 				stair_placed = true
 
-				# Următorul etaj va porni de la Marker3D-ul de sus/ieșire al scării (Exit_North la Y = +4.0m)!
+				# Ieșirea de jos a scării (Exit_North la Y=-6.0m) devine punctul de pornire pentru etajul următor!
 				var s_out = sockets[0]
 				var out_basis = child_basis * s_out.transform.basis
 				var out_pos = child_pos + child_basis * s_out.position
@@ -245,16 +241,14 @@ func generate_dungeon() -> void:
 				}
 				break
 
-			if not stair_placed:
-				print("Avertisment: Nicio scară nu s-a putut potrivi fizic. Se continuă pe ieșirea liberă.")
-				if not floor_exits_queue.is_empty():
-					current_open_exit = floor_exits_queue.pop_front()
+			if not stair_placed and not floor_exits_queue.is_empty():
+				current_open_exit = floor_exits_queue.pop_front()
 
 		# Sigilăm restul de ieșiri nefolosite de pe acest etaj cu Dead End-uri
 		for remaining in floor_exits_queue:
 			_seal_exit_with_dead_end(remaining["global_transform"])
 
-	print("Dungeon generat cu succes pe %d etaje! Total piese: %d" % [max_floors, spawned_pieces.size()])
+	print("Dungeon generat cu succes descendent pe %d etaje! Total piese: %d" % [max_floors, spawned_pieces.size()])
 
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
@@ -290,14 +284,16 @@ func _seal_exit_with_dead_end(parent_exit_transform: Transform3D) -> void:
 	pieces_node.add_child(dead_end_instance, true)
 	spawned_pieces.append(dead_end_instance)
 
-# --- SPAWNING LOOT PROCEDURAL ---
+# --- SPAWNING LOOT PROCEDURAL AȘEZAT PE PODEA ---
 func spawn_dungeon_loot() -> void:
-	print("Se spawnează loot în piese...")
+	print("Se spawnează loot pe podeaua pieselor...")
 	for piece in spawned_pieces:
-		if piece.name.contains("Entrance") or piece.name.contains("DeadEnd"):
+		if piece.name.contains("Entrance") or piece.name.contains("DeadEnd") or piece.name.contains("Stair"):
 			continue
 
-		var center_pos = piece.global_position + Vector3(0, 0.5, 0)
+		# Poziționăm loot-ul raportat la înălțimea Y a podelei piesei curente!
+		var floor_y = piece.global_position.y
+		var center_pos = Vector3(piece.global_position.x, floor_y + 0.3, piece.global_position.z)
 
 		if piece.name.contains("Room") or piece.scene_file_path.contains("room"):
 			var count = randi_range(1, 3)
@@ -337,8 +333,10 @@ func spawn_loot_at(pos: Vector3) -> void:
 
 	var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
 
-	loot_instance.position = pos + Vector3(randf_range(-1.0, 1.0), 0.5, randf_range(-1.0, 1.0))
+	# Offset fin pe XZ pe podea
+	var spawn_p = pos + Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0))
 	loot_node.add_child(loot_instance, true)
+	loot_instance.global_position = spawn_p
 	loot_instance.init_loot(unique_id, rarity, price, color)
 
 # --- SPAWNING MULTIPLAYER PLAYERS ---
