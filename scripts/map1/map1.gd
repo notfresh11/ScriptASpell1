@@ -17,28 +17,22 @@ func _ready() -> void:
 	if multiplayer.is_server():
 		# 1. Inițiază generarea dungeon-ului pe server
 		if dungeon_generator:
-			if dungeon_generator.has_signal("done_generating"):
-				dungeon_generator.done_generating.connect(_on_dungeon_generated, CONNECT_ONE_SHOT)
 			dungeon_generator.generate_dungeon()
+
+			# Legăm ușa de la intrarea în dungeon (generată static în map1.tscn) cu cea din exterior
+			# Configurăm legătura de teleportare între uși
+			# Pentru ușa exterioară: destinația este ușa din interior (punem playerul un pic în fața ei ca să nu se blokeze)
+			exterior_door.target_position = interior_door.global_position + Vector3(0, 0.5, 1.5)
+
+			# Pentru ușa interioară: destinația este ușa din exterior (punem playerul în fața ușii de afară)
+			interior_door.target_position = exterior_door.global_position + Vector3(0, 0.5, 1.5)
+
+			# Sincronizăm coordonatele către toți clienții
+			rpc("sync_door_targets", exterior_door.target_position, interior_door.target_position)
 
 		# 2. Spawnăm toți jucătorii din lobby pe harta exterioară
 		for player_id in NetworkManager.players:
 			spawn_player(player_id)
-
-func _on_dungeon_generated() -> void:
-	if dungeon_generator and dungeon_generator.has_method("get_entrance_position"):
-		var entrance_pos = dungeon_generator.get_entrance_position()
-		interior_door.global_position = entrance_pos
-
-	# Legăm ușa de la intrarea în dungeon cu cea din exterior
-	# Pentru ușa exterioară: destinația este ușa din interior
-	exterior_door.target_position = interior_door.global_position + Vector3(0, 0.5, 1.5)
-
-	# Pentru ușa interioară: destinația este ușa din exterior
-	interior_door.target_position = exterior_door.global_position + Vector3(0, 0.5, 1.5)
-
-	# Sincronizăm coordonatele către toți clienții
-	rpc("sync_door_targets", exterior_door.target_position, interior_door.target_position)
 
 func spawn_player(player_id: int) -> void:
 	var player_instance = player_scene.instantiate()

@@ -134,7 +134,7 @@ Apar în timpul rulării unui cod aparent valid, dar cu logică defectuoasă:
 Vinde piese autorizate, sigure, dar foarte scumpe. Aici găsești blocuri logice de bază (`IF`, `ELSE`, `WHILE`), senzori, blocuri de mișcare și consumabile strategice:
 
 *   **Debugger-ul:** Un consumabil pe care îl folosești în hub pe codul tău. Îți rulează o simulare sigură și îți confirmă dacă codul tău este stabil sau are bug-uri, eliminând complet riscul de haos în timpul expediției.
-*   **AI Genie:** Un asistent duh în lampă în faza de codare. Îi dai prompt text cu ce vrei să programezi și el îți generează codul. Cu cât ești mai puțin specific, cu atât șansa de sabotaj (*Malicious Compliance*) este mai mare (ex: îi ceri să dea foc inamicului, iar el îți dă foc la inventar sau la propriile cizme).
+*   **AI Genie:** Un asistent duh în lampă în faza de codare. Îi dai prompt text cu ce vrei să programezi și el îți generează codul. Cu cât ești mai puțin specific, cu atât șansa de sabotaj (*Malicious Compliance*) este mare (ex: îi ceri să dea foc inamicului, iar el îți dă foc la inventar sau la propriile cizme).
 
 ### B. Magazinul de Piraterie: The Medieval Bay
 Un magazin ascuns în colțul bazei unde se vând piese "crăpate" (*cracked*) la 80% reducere, dar cu riscuri ascunse de tip troieni magiști, malware și viruși:
@@ -438,7 +438,7 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 6.  **Restricționare Lobby/Dungeon:**
     *   Interpreterul forțează rularea exclusivă a default-urilor standard (mișcare liberă) cât timp jucătorul se află în Lobby (`TestingPlatform`), deblocând rularea scripturilor custom exclusiv în interiorul dungeon-ului (`Map1`).
 7.  **Chaos Engine (Godot Glitch Cube):**
-    *   Dacă interpreterul depistează o eroare de sintaxă activată (de ex: un bloc `IF` gol la capăt sau `ELSE` deconectat), apelează `ChaosEngine` pe server. Serverul instanțiază și replicează pe toți clienții (prin containerul `Loot` și `MultiplayerSpawner`) un cub static ne-interactiv decorat cu logoul clasic Godot (`icon.svg`) în fața jucătorului.
+    *   Dacă interpreterul depistează o eroare de sintaxă activată (de ex: un bloc `IF` gol la capăt sau `ELSE` deconectat), apelează `ChaosEngine` pe server. Serverul instanțiază și replicează pe toți clienții (pornit prin containerul `Loot` și `MultiplayerSpawner`) un cub static ne-interactiv decorat cu logoul clasic Godot (`icon.svg`) în fața jucătorului.
 
 #### B. Bugs Întâmpinate & Rezolvări Tehnice
 
@@ -503,18 +503,16 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 
 ---
 
-### SESIUNEA 9: Integrare Completă SimpleDungeons (Voxel AStar 3D Dungeon Generator)
+### SESIUNEA 9: Revenire la Algoritmul Propriu pe Bază de Socket-uri (Single Floor + Scări)
 
 #### A. Ce s-a realizat în această sesiune (Project State)
-1. **Migrare la Plugin-ul SimpleDungeons (`DungeonGenerator3D`):**
-   - Inlocuit complet algoritmul custom cu cel furnizat de addon-ul `SimpleDungeons` (`DungeonGenerator3D`).
-   - Toate cele 21 de piese din `scenes/dungeon/pieces/` (camere, coridoare, scări) au fost convertite în prefabs `DungeonRoom3D` definind dimensiuni de voxel (`size_in_voxels`) și noduri de ușă (`DOOR` / `DOOR?`).
-2. **Integrare Sincronizată pe Multiplayer:**
-   - `dungeon_generator.gd` extinde `DungeonGenerator3D` și suprascrie `create_or_recreate_rooms_container()` pentru a seta `$PieceSpawner.spawn_path` înainte ca camerele să fie instanțiate în arbore.
-   - Fiecare cameră unvirtualizată folosește `into_parent.add_child(inst, true)` pentru a forța generarea de nume valide în rețea.
-3. **Sincronizare Uși & Spawning Loot:**
-   - `map1.gd` ascultă semnalul `done_generating` emisi de `dungeon_generator`, poziționează ușa interioară la camera de intrare (`Entrance`) și sincronizează destinațiile prin RPC pe toți clienții.
-   - Spawning-ul de loot se execută automat pe server la finalizarea generării.
+1. **Revenire la Algoritmul Custom de Socket-uri (Socket Matching):**
+   - La cererea expresă a utilizatorului, am renunțat la plugin-ul `SimpleDungeons` și am restaurat algoritmul nostru nativ din `dungeon_generator.gd` bazat pe socket-uri (`NARROW` vs `WIDE`).
+   - Algoritmul oferă un trunchi principal masiv (`WIDE`), tranziții naturale către coridoare înguste (`NARROW`) și plasare organică de încăperi, oferind un stil autentic de Pilgrim / Kletka.
+2. **Configurare Single Floor cu Suport de Scări:**
+   - S-a configurat generarea pe un singur etaj principal (`max_floors = 1`), menținând totuși plasarea opțională a 1-2 piese de scări (`stairs.tscn` / `stairs_wide.tscn`) pentru varietate vizuală și explorare.
+3. **Integrare Toate Cele 21 de Piese:**
+   - Toate cele 21 de scene de piese (camere mici, mari, colțuri, coridoare, intersecții, T-uri, tranziții și scări) sunt incluse și folosite activ în pool-urile de generare.
 
 ---
 
