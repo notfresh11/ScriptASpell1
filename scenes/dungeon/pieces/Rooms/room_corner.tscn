@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://hbax1obfjp5"]
+[gd_scene format=3]
 
-[ext_resource type="PackedScene" uid="uid://badcu5x0q3jvf" path="res://assets/FBX format/room-corner.fbx" id="1_q58ns"]
-[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_wdrb2"]
+[ext_resource type="PackedScene" path="res://assets/FBX format/room-corner.fbx" id="1_q58ns"]
+[ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_wdrb2"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ltgrg"]
 albedo_texture = ExtResource("2_wdrb2")
@@ -14,10 +14,18 @@ surface_material_override/0 = SubResource("StandardMaterial3D_ltgrg")
 
 [node name="Exits" type="Node3D" parent="." index="1" unique_id=2021096558]
 
+[node name="Exit_Narrow_North" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+metadata/socket_type = "NARROW"
+
 [node name="Exit_Narrow_South" type="Marker3D" parent="Exits" index="0" unique_id=1638973643]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 6)
 metadata/socket_type = "NARROW"
 
 [node name="Exit_Narrow_East" type="Marker3D" parent="Exits" index="1" unique_id=1620188943]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 6, 0, 0)
+metadata/socket_type = "NARROW"
+
+[node name="Exit_Narrow_West" type="Marker3D" parent="Exits"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -6, 0, 0)
 metadata/socket_type = "NARROW"
