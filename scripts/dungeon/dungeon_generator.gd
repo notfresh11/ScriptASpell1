@@ -186,120 +186,6 @@ func _add_collisions_to_piece(piece_instance: Node3D) -> void:
 			var mesh_inst = current_node as MeshInstance3D
 			mesh_inst.create_trimesh_collision()
 
-func check_and_close_overlapping_sockets(socket_idx: int) -> bool:
-	if socket_idx < 0 or socket_idx >= open_sockets.size():
-		return false
-
-	var target_data = open_sockets[socket_idx]
-	var target_xform = get_socket_global_transform(target_data)
-	var target_pos = target_xform.origin
-	var target_fwd = -target_xform.basis.z
-
-	for other_idx in range(open_sockets.size()):
-		if other_idx == socket_idx:
-			continue
-
-		var other_data = open_sockets[other_idx]
-		if other_data["type"] != target_data["type"]:
-			continue
-
-		var other_xform = get_socket_global_transform(other_data)
-		var other_pos = other_xform.origin
-		var other_fwd = -other_xform.basis.z
-
-		if target_pos.distance_to(other_pos) < 1.2 and target_fwd.dot(other_fwd) < -0.7:
-			var max_i = max(socket_idx, other_idx)
-			var min_i = min(socket_idx, other_idx)
-			open_sockets.remove_at(max_i)
-			open_sockets.remove_at(min_i)
-			return true
-
-	return false
-
-func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
-	if target_idx < 0 or target_idx >= open_sockets.size():
-		return false
-
-	if check_and_close_overlapping_sockets(target_idx):
-		return true
-
-	var socket_data = open_sockets[target_idx]
-	var target_xform = get_socket_global_transform(socket_data)
-	var target_type: String = socket_data["type"]
-	var floor_idx: int = socket_data["floor"]
-	var parent_piece: Node3D = socket_data["piece"]
-	var parent_is_room: bool = is_room_piece(parent_piece)
-
-	var pool = scene_pool.duplicate()
-	pool.shuffle()
-
-	for scene in pool:
-		var candidate_inst = scene.instantiate()
-		var cand_is_room: bool = is_room_piece(candidate_inst)
-
-		# REGULĂ STRICTĂ: Camerele nu se spawnează direct lângă alte camere!
-		if parent_is_room and cand_is_room:
-			candidate_inst.queue_free()
-			continue
-
-		var cand_markers = get_piece_exit_markers(candidate_inst)
-		var cand_local_aabb = get_piece_local_aabb(candidate_inst)
-
-		cand_markers.shuffle()
-
-		for cand_marker in cand_markers:
-			var cand_type = get_socket_type(cand_marker)
-			if cand_type != target_type:
-				continue
-
-			# Dacă este scară, conectăm DOAR prin socket-ul de sus (Top) ca să coboare curat
-			var is_stair = cand_is_stair_piece(candidate_inst)
-			if is_stair and not ("top" in cand_marker.name.to_lower()):
-				continue
-
-			var cand_marker_local = get_relative_transform(cand_marker, candidate_inst)
-			var cand_global_xform = target_xform * FLIP_180_Y * cand_marker_local.inverse()
-
-			var cand_world_aabb = transform_aabb(cand_local_aabb, cand_global_xform)
-
-			var overlaps = false
-			for placed_aabb in placed_aabbs:
-				if aabbs_intersect_inset(cand_world_aabb, placed_aabb, 0.3):
-					overlaps = true
-					break
-
-			if not overlaps:
-				candidate_inst.name = "Piece_%d_%d" % [floor_idx, spawned_pieces.size()]
-				pieces_node.add_child(candidate_inst, true)
-				candidate_inst.global_transform = cand_global_xform
-
-				_add_collisions_to_piece(candidate_inst)
-
-				spawned_pieces.append(candidate_inst)
-				placed_aabbs.append(cand_world_aabb)
-				open_sockets.remove_at(target_idx)
-
-				# Calculăm noul floor_idx dacă piesa este o scară
-				var next_floor_idx = floor_idx
-				if cand_is_stair_piece(candidate_inst):
-					next_floor_idx = floor_idx + 1
-
-				for m in cand_markers:
-					if m == cand_marker:
-						continue
-					open_sockets.append({
-						"piece": candidate_inst,
-						"marker": m,
-						"floor": next_floor_idx,
-						"type": get_socket_type(m)
-					})
-				return true
-
-		candidate_inst.queue_free()
-
-	_seal_single_socket(target_idx)
-	return false
-
 func is_room_piece(piece_inst: Node3D) -> bool:
 	if not piece_inst:
 		return false
@@ -313,6 +199,298 @@ func cand_is_stair_piece(piece_inst: Node3D) -> bool:
 	var pname = piece_inst.name.to_lower()
 	var spath = piece_inst.scene_file_path.to_lower()
 	return ("stair" in pname or "stair" in spath)
+
+func is_room_scene(scene: PackedScene) -> bool:
+	if not scene:
+		return false
+	var spath = scene.resource_path.to_lower()
+	return ("room" in spath or "entrance" in spath)
+
+func find_overlapping_socket_idx(target_idx: int) -> int:
+	if target_idx < 0 or target_idx >= open_sockets.size():
+		return -1
+
+	var target_data = open_sockets[target_idx]
+	var target_xform = get_socket_global_transform(target_data)
+	var target_pos = target_xform.origin
+	var target_fwd = -target_xform.basis.z
+
+	for other_idx in range(open_sockets.size()):
+		if other_idx == target_idx:
+			continue
+
+		var other_data = open_sockets[other_idx]
+		if other_data["type"] != target_data["type"]:
+			continue
+
+		var other_xform = get_socket_global_transform(other_data)
+		var other_pos = other_xform.origin
+		var other_fwd = -other_xform.basis.z
+
+		if target_pos.distance_to(other_pos) < 1.2 and target_fwd.dot(other_fwd) < -0.7:
+			return other_idx
+
+	return -1
+
+func generate_floor_backtrack(current_floor: int, target_pieces: int, min_rooms: int, current_floor_piece_count: int, current_floor_room_count: int, step_info: Dictionary) -> bool:
+	step_info["steps"] += 1
+	if step_info["steps"] > step_info["max_steps"]:
+		return false
+
+	# BASE CASE: Target reached for this floor
+	if current_floor_piece_count >= target_pieces and current_floor_room_count >= min_rooms:
+		if current_floor == max_floors - 1:
+			return true # All floors generated successfully!
+
+		# Try placing a stair leading to current_floor + 1
+		var floor_socket_indices: Array[int] = []
+		for i in range(open_sockets.size()):
+			if open_sockets[i]["floor"] == current_floor:
+				floor_socket_indices.append(i)
+
+		floor_socket_indices.shuffle()
+		var stair_scenes = [STAIRS_SCENE, STAIRS_WIDE_SCENE]
+		stair_scenes.shuffle()
+
+		for target_idx in floor_socket_indices:
+			if target_idx >= open_sockets.size():
+				continue
+			var socket_data = open_sockets[target_idx]
+			var socket_type = socket_data["type"]
+			var socket_xform = get_socket_global_transform(socket_data)
+
+			for stair_scene in stair_scenes:
+				var stair_inst = stair_scene.instantiate()
+				var stair_markers = get_piece_exit_markers(stair_inst)
+				var stair_local_aabb = get_piece_local_aabb(stair_inst)
+				var stair_placed_and_undone = false
+
+				for cand_marker in stair_markers:
+					if not ("top" in cand_marker.name.to_lower()):
+						continue
+					if get_socket_type(cand_marker) != socket_type:
+						continue
+
+					var cand_marker_local = get_relative_transform(cand_marker, stair_inst)
+					var cand_global_xform = socket_xform * FLIP_180_Y * cand_marker_local.inverse()
+					var cand_world_aabb = transform_aabb(stair_local_aabb, cand_global_xform)
+
+					var overlaps = false
+					for placed_aabb in placed_aabbs:
+						if aabbs_intersect_inset(cand_world_aabb, placed_aabb, 0.3):
+							overlaps = true
+							break
+
+					if not overlaps:
+						stair_inst.name = "Piece_Stair_%d_%d" % [current_floor, spawned_pieces.size()]
+						pieces_node.add_child(stair_inst, true)
+						stair_inst.global_transform = cand_global_xform
+						_add_collisions_to_piece(stair_inst)
+
+						spawned_pieces.append(stair_inst)
+						placed_aabbs.append(cand_world_aabb)
+						open_sockets.remove_at(target_idx)
+
+						var new_stair_sockets: Array[Dictionary] = []
+						for m in stair_markers:
+							if m == cand_marker:
+								continue
+							var next_f = current_floor + 1
+							var new_sock = {
+								"piece": stair_inst,
+								"marker": m,
+								"floor": next_f,
+								"type": get_socket_type(m)
+							}
+							open_sockets.append(new_sock)
+							new_stair_sockets.append(new_sock)
+
+						stairs_placed_count += 1
+
+						var next_floor_ok = generate_floor_backtrack(current_floor + 1, target_pieces, min_rooms, 0, 0, step_info)
+						if next_floor_ok:
+							return true
+
+						# UNDO STAIR
+						stairs_placed_count -= 1
+						for _s in new_stair_sockets:
+							open_sockets.pop_back()
+						open_sockets.insert(target_idx, socket_data)
+						spawned_pieces.pop_back()
+						placed_aabbs.pop_back()
+						pieces_node.remove_child(stair_inst)
+						stair_inst.queue_free()
+						stair_placed_and_undone = true
+						break
+
+				if not stair_placed_and_undone:
+					stair_inst.queue_free()
+
+		return false
+
+	# FIND OPEN SOCKETS FOR CURRENT FLOOR
+	var floor_socket_indices: Array[int] = []
+	for i in range(open_sockets.size()):
+		if open_sockets[i]["floor"] == current_floor:
+			floor_socket_indices.append(i)
+
+	if floor_socket_indices.is_empty():
+		return false # Dead end before reaching piece count target
+
+	floor_socket_indices.shuffle()
+
+	var wide_pool = [
+		CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_CORNER_SCENE,
+		CORRIDOR_WIDE_JUNCTION_SCENE, CORRIDOR_WIDE_INTERSECTION_SCENE
+	]
+
+	var narrow_pool = [
+		CORRIDOR_SCENE, CORRIDOR_CORNER_SCENE,
+		CORRIDOR_JUNCTION_SCENE, CORRIDOR_INTERSECTION_SCENE
+	]
+
+	var room_pool = [
+		ROOM_SMALL_SCENE, ROOM_SMALL_2_SCENE, ROOM_CORNER_SCENE,
+		ROOM_LARGE_SCENE, ROOM_LARGE_2_SCENE, ROOM_WIDE_SCENE, ROOM_WIDE_2_SCENE
+	]
+
+	for target_socket_idx in floor_socket_indices:
+		if target_socket_idx >= open_sockets.size():
+			continue
+
+		var target_socket_data = open_sockets[target_socket_idx]
+		var target_xform = get_socket_global_transform(target_socket_data)
+		var target_type: String = target_socket_data["type"]
+		var parent_piece: Node3D = target_socket_data["piece"]
+		var parent_is_room: bool = is_room_piece(parent_piece)
+
+		# CHECK SOCKET CLOSURE WITH FACING SOCKET
+		var other_socket_idx = find_overlapping_socket_idx(target_socket_idx)
+		if other_socket_idx != -1:
+			var socket_a = open_sockets[target_socket_idx]
+			var socket_b = open_sockets[other_socket_idx]
+
+			var max_i = max(target_socket_idx, other_socket_idx)
+			var min_i = min(target_socket_idx, other_socket_idx)
+			open_sockets.remove_at(max_i)
+			open_sockets.remove_at(min_i)
+
+			var closed_ok = generate_floor_backtrack(current_floor, target_pieces, min_rooms, current_floor_piece_count, current_floor_room_count, step_info)
+			if closed_ok:
+				return true
+
+			# UNDO socket closure
+			open_sockets.insert(min_i, socket_b if min_i == other_socket_idx else socket_a)
+			open_sockets.insert(max_i, socket_a if max_i == target_socket_idx else socket_b)
+
+		# BUILD CANDIDATE POOL FOR THIS SOCKET
+		var candidate_scenes: Array = []
+
+		if target_type == "WIDE":
+			if current_floor == 0:
+				candidate_scenes = wide_pool.duplicate()
+				candidate_scenes.append(CORRIDOR_TRANSITION_SCENE)
+			else:
+				candidate_scenes = [CORRIDOR_TRANSITION_SCENE] + wide_pool.duplicate()
+			candidate_scenes.shuffle()
+		else:
+			# NARROW socket
+			var corridors = narrow_pool.duplicate()
+			var rooms = room_pool.duplicate()
+			corridors.shuffle()
+			rooms.shuffle()
+
+			if current_floor_room_count < min_rooms:
+				candidate_scenes = rooms + corridors
+			else:
+				candidate_scenes = corridors + rooms
+				candidate_scenes.shuffle()
+
+		for scene in candidate_scenes:
+			var cand_inst = scene.instantiate()
+			var cand_is_room: bool = is_room_piece(cand_inst)
+
+			# REGULĂ STRICTĂ: Camerele nu se spawnează direct lângă alte camere!
+			if parent_is_room and cand_is_room:
+				cand_inst.queue_free()
+				continue
+
+			var cand_markers = get_piece_exit_markers(cand_inst)
+			var cand_local_aabb = get_piece_local_aabb(cand_inst)
+			cand_markers.shuffle()
+
+			var placed_and_undone = false
+
+			for cand_marker in cand_markers:
+				if get_socket_type(cand_marker) != target_type:
+					continue
+
+				if cand_is_stair_piece(cand_inst) and not ("top" in cand_marker.name.to_lower()):
+					continue
+
+				var cand_marker_local = get_relative_transform(cand_marker, cand_inst)
+				var cand_global_xform = target_xform * FLIP_180_Y * cand_marker_local.inverse()
+				var cand_world_aabb = transform_aabb(cand_local_aabb, cand_global_xform)
+
+				var overlaps = false
+				for placed_aabb in placed_aabbs:
+					if aabbs_intersect_inset(cand_world_aabb, placed_aabb, 0.3):
+						overlaps = true
+						break
+
+				if not overlaps:
+					cand_inst.name = "Piece_%d_%d" % [current_floor, spawned_pieces.size()]
+					pieces_node.add_child(cand_inst, true)
+					cand_inst.global_transform = cand_global_xform
+					_add_collisions_to_piece(cand_inst)
+
+					spawned_pieces.append(cand_inst)
+					placed_aabbs.append(cand_world_aabb)
+					open_sockets.remove_at(target_socket_idx)
+
+					var new_sockets_added: Array[Dictionary] = []
+					for m in cand_markers:
+						if m == cand_marker:
+							continue
+						var new_sock = {
+							"piece": cand_inst,
+							"marker": m,
+							"floor": current_floor,
+							"type": get_socket_type(m)
+						}
+						open_sockets.append(new_sock)
+						new_sockets_added.append(new_sock)
+
+					var is_room = cand_is_room and not cand_is_stair_piece(cand_inst)
+
+					var success = generate_floor_backtrack(
+						current_floor,
+						target_pieces,
+						min_rooms,
+						current_floor_piece_count + 1,
+						current_floor_room_count + (1 if is_room else 0),
+						step_info
+					)
+
+					if success:
+						return true
+
+					# BACKTRACK PIECE
+					for _s in new_sockets_added:
+						open_sockets.pop_back()
+
+					open_sockets.insert(target_socket_idx, target_socket_data)
+					spawned_pieces.pop_back()
+					placed_aabbs.pop_back()
+					pieces_node.remove_child(cand_inst)
+					cand_inst.queue_free()
+					placed_and_undone = true
+					break
+
+			if not placed_and_undone:
+				cand_inst.queue_free()
+
+	return false
 
 func _seal_single_socket(socket_idx: int) -> void:
 	if socket_idx < 0 or socket_idx >= open_sockets.size():
@@ -355,138 +533,61 @@ func _seal_single_socket(socket_idx: int) -> void:
 
 	open_sockets.remove_at(socket_idx)
 
-func generate_dungeon() -> void:
-	print("Începe generarea procedurală pe socket-uri (3 Etaje cu buffer 1m)...")
-	spawned_pieces.clear()
-	placed_aabbs.clear()
-	open_sockets.clear()
-	stairs_placed_count = 0
-
-	for child in pieces_node.get_children():
-		child.queue_free()
-
-	# 1. Plasare ENTRANCE
-	var entrance_inst = ENTRANCE_SCENE.instantiate()
-	entrance_inst.name = "Piece_Entrance"
-	entrance_inst.position = Vector3.ZERO
-	entrance_inst.rotation_degrees = Vector3.ZERO
-	pieces_node.add_child(entrance_inst, true)
-	_add_collisions_to_piece(entrance_inst)
-	spawned_pieces.append(entrance_inst)
-
-	var entrance_local_aabb = get_piece_local_aabb(entrance_inst)
-	var entrance_world_aabb = transform_aabb(entrance_local_aabb, entrance_inst.global_transform)
-	placed_aabbs.append(entrance_world_aabb)
-
-	for marker in get_piece_exit_markers(entrance_inst):
-		open_sockets.append({
-			"piece": entrance_inst,
-			"marker": marker,
-			"floor": 0,
-			"type": get_socket_type(marker)
-		})
-
-	var wide_corridors_pool = [
-		CORRIDOR_WIDE_SCENE,
-		CORRIDOR_WIDE_CORNER_SCENE,
-		CORRIDOR_WIDE_JUNCTION_SCENE,
-		CORRIDOR_WIDE_INTERSECTION_SCENE
-	]
-
-	var narrow_and_rooms_pool = [
-		CORRIDOR_SCENE, CORRIDOR_CORNER_SCENE, CORRIDOR_JUNCTION_SCENE, CORRIDOR_INTERSECTION_SCENE,
-		ROOM_SMALL_SCENE, ROOM_SMALL_2_SCENE, ROOM_CORNER_SCENE, ROOM_LARGE_SCENE, ROOM_LARGE_2_SCENE, ROOM_WIDE_SCENE, ROOM_WIDE_2_SCENE
-	]
-
-	# Generăm pe etaje (Floor 0 -> Floor 1 -> Floor 2)
-	for current_floor in range(max_floors):
-		print("--- Generare Etaj %d ---" % current_floor)
-
-		# A. Generare trunchi WIDE pe etajul curent
-		var wide_trunk_target = 4
-		var wide_trunk_count = 0
-		var attempts = 0
-
-		while wide_trunk_count < wide_trunk_target and attempts < 20:
-			attempts += 1
-			var floor_wide_indices: Array[int] = []
-			for i in range(open_sockets.size()):
-				if open_sockets[i]["floor"] == current_floor and open_sockets[i]["type"] == "WIDE":
-					floor_wide_indices.append(i)
-
-			if floor_wide_indices.is_empty():
-				break
-
-			var target_idx = floor_wide_indices.pick_random()
-			if try_place_piece_at_socket(target_idx, wide_corridors_pool):
-				wide_trunk_count += 1
-
-		# B. Tranziții WIDE -> NARROW pe etajul curent
-		attempts = 0
-		while attempts < 15:
-			attempts += 1
-			var wide_socket_idx = -1
-			for i in range(open_sockets.size()):
-				if open_sockets[i]["floor"] == current_floor and open_sockets[i]["type"] == "WIDE":
-					wide_socket_idx = i
-					break
-
-			if wide_socket_idx == -1:
-				break
-
-			if not try_place_piece_at_socket(wide_socket_idx, [CORRIDOR_TRANSITION_SCENE]):
-				break
-
-		# C. Generare piese NARROW & Camere per etaj (~30 piese per etaj)
-		var floor_placed_count = 0
-		attempts = 0
-		while floor_placed_count < pieces_per_floor and attempts < 150:
-			attempts += 1
-
-			var floor_socket_indices: Array[int] = []
-			for i in range(open_sockets.size()):
-				if open_sockets[i]["floor"] == current_floor:
-					floor_socket_indices.append(i)
-
-			if floor_socket_indices.is_empty():
-				break
-
-			var target_idx = floor_socket_indices.pick_random()
-			if try_place_piece_at_socket(target_idx, narrow_and_rooms_pool):
-				floor_placed_count += 1
-
-		# D. Plasare Scară către etajul următor (dacă mai avem etaje de generat)
-		if current_floor < max_floors - 1:
-			var stair_placed = false
-			attempts = 0
-			while not stair_placed and attempts < 30:
-				attempts += 1
-				var floor_socket_indices: Array[int] = []
-				for i in range(open_sockets.size()):
-					if open_sockets[i]["floor"] == current_floor:
-						floor_socket_indices.append(i)
-
-				if floor_socket_indices.is_empty():
-					break
-
-				var target_idx = floor_socket_indices.pick_random()
-				var stair_pool = [STAIRS_SCENE, STAIRS_WIDE_SCENE]
-				if try_place_piece_at_socket(target_idx, stair_pool):
-					stair_placed = true
-					stairs_placed_count += 1
-					print("Scară plasată de la Etajul %d la Etajul %d" % [current_floor, current_floor + 1])
-
-	# Sigilare socket-uri rămase deschise
-	_seal_all_open_sockets()
-
-	print("Dungeon generat cu succes! Total piese plasate: %d" % spawned_pieces.size())
-
-	if multiplayer.is_server():
-		spawn_dungeon_loot()
-
 func _seal_all_open_sockets() -> void:
 	while not open_sockets.is_empty():
 		_seal_single_socket(0)
+
+func generate_dungeon() -> void:
+	print("Începe generarea procedurală cu Backtracking (3 Etaje x ~%d piese, min 3-4 camere/etaj)..." % pieces_per_floor)
+
+	var attempts = 0
+	var success = false
+
+	while attempts < 5 and not success:
+		attempts += 1
+		print("Attempt %d / 5..." % attempts)
+
+		spawned_pieces.clear()
+		placed_aabbs.clear()
+		open_sockets.clear()
+		stairs_placed_count = 0
+
+		for child in pieces_node.get_children():
+			child.queue_free()
+
+		# 1. Plasare ENTRANCE
+		var entrance_inst = ENTRANCE_SCENE.instantiate()
+		entrance_inst.name = "Piece_Entrance"
+		entrance_inst.position = Vector3.ZERO
+		entrance_inst.rotation_degrees = Vector3.ZERO
+		pieces_node.add_child(entrance_inst, true)
+		_add_collisions_to_piece(entrance_inst)
+		spawned_pieces.append(entrance_inst)
+
+		var entrance_local_aabb = get_piece_local_aabb(entrance_inst)
+		var entrance_world_aabb = transform_aabb(entrance_local_aabb, entrance_inst.global_transform)
+		placed_aabbs.append(entrance_world_aabb)
+
+		for marker in get_piece_exit_markers(entrance_inst):
+			open_sockets.append({
+				"piece": entrance_inst,
+				"marker": marker,
+				"floor": 0,
+				"type": get_socket_type(marker)
+			})
+
+		var step_info = { "steps": 0, "max_steps": 3000 }
+		success = generate_floor_backtrack(0, pieces_per_floor, 3, 0, 0, step_info)
+
+	if success:
+		_seal_all_open_sockets()
+		print("Dungeon generat cu succes prin Backtracking! Total piese plasate: %d" % spawned_pieces.size())
+	else:
+		print("WARNING: Backtracking-ul a finalizat parțial. Se sigilează structura curentă...")
+		_seal_all_open_sockets()
+
+	if multiplayer.is_server():
+		spawn_dungeon_loot()
 
 # --- SPAWNING LOOT PROCEDURAL ---
 func spawn_dungeon_loot() -> void:
