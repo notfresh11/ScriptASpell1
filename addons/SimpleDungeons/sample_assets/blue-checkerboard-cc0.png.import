@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://hrvoqqlvjv1o"
-path.s3tc="res://.godot/imported/colormap.png-aa70aa09a5ce4eef189ccc92fd6a7c38.s3tc.ctex"
+uid="uid://i7rtr0ewxm5j"
+path.s3tc="res://.godot/imported/blue-checkerboard-cc0.png-1c2a1348fd1d3b6ea7498ed312065a17.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/FBX format/Textures/colormap.png"
-dest_files=["res://.godot/imported/colormap.png-aa70aa09a5ce4eef189ccc92fd6a7c38.s3tc.ctex"]
+source_file="res://addons/SimpleDungeons/sample_assets/blue-checkerboard-cc0.png"
+dest_files=["res://.godot/imported/blue-checkerboard-cc0.png-1c2a1348fd1d3b6ea7498ed312065a17.s3tc.ctex"]
 
 [params]
 

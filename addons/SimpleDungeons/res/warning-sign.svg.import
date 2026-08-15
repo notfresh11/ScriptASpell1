@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://hrvoqqlvjv1o"
-path.s3tc="res://.godot/imported/colormap.png-aa70aa09a5ce4eef189ccc92fd6a7c38.s3tc.ctex"
+uid="uid://byywkosue8x0q"
+path.s3tc="res://.godot/imported/warning-sign.svg-8e061f920e0c1c369bbe5e6c9df382f2.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/FBX format/Textures/colormap.png"
-dest_files=["res://.godot/imported/colormap.png-aa70aa09a5ce4eef189ccc92fd6a7c38.s3tc.ctex"]
+source_file="res://addons/SimpleDungeons/res/warning-sign.svg"
+dest_files=["res://.godot/imported/warning-sign.svg-8e061f920e0c1c369bbe5e6c9df382f2.s3tc.ctex"]
 
 [params]
 
@@ -39,3 +39,6 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=0
+svg/scale=1.0
+editor/scale_with_editor_scale=false
+editor/convert_colors_with_editor_theme=false
