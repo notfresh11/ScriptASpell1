@@ -10,3 +10,13 @@ albedo_texture = ExtResource("2_65ynp")
 
 [node name="stairs-wide" parent="." index="0" unique_id=1103500273]
 surface_material_override/0 = SubResource("StandardMaterial3D_kerls")
+
+[node name="Exits" type="Node3D" parent="."]
+
+[node name="Exit_Wide_Top" type="Marker3D" parent="Exits"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
+metadata/socket_type = "WIDE"
+
+[node name="Exit_Wide_Bottom" type="Marker3D" parent="Exits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, -6)
+metadata/socket_type = "WIDE"
