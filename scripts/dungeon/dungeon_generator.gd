@@ -1,20 +1,8 @@
 # scripts/dungeon/dungeon_generator.gd
 extends Node3D
 
-@export var max_floors: int = 3 # Numărul de etaje verticale ale dungeon-ului
-@export var pieces_per_floor: int = 10 # Numărul de piese de pe FIECARE etaj orizontal
+@export var num_pieces: int = 25 # Numărul de piese dintr-o sesiune de dungeon
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
-
-# Ponderi de plasare tweakabile din Inspector
-@export_group("Piece Weights")
-@export var hallway_weight: float = 35.0
-@export var corner_weight: float = 25.0
-@export var t_junction_weight: float = 15.0
-@export var four_way_weight: float = 10.0
-@export var room_weight: float = 20.0
-
-@export_group("Loop Settings")
-@export var loop_chance: float = 0.15 # 15% șansă de a forma buclă/circuit dacă 2 ieșiri se întâlnesc
 
 # Preîncărcăm piesele modulare + Loot
 const ENTRANCE_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/entrance_piece.tscn")
@@ -33,8 +21,20 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 @onready var loot_node: Node3D = $Loot
 @onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 
+# Grid 3D de ocupare: cheia este Vector3i(grid_x, grid_y, grid_z)
+# Fiecare celulă are 10m latură pe X/Z și 4m înălțime pe Y!
+var grid_occupied: Dictionary = {}
+
 # Piese instanțiate
 var spawned_pieces: Array[Node3D] = []
+
+# Direcții cardinale
+const NORTH = Vector3i(0, 0, -1)
+const SOUTH = Vector3i(0, 0, 1)
+const EAST  = Vector3i(1, 0, 0)
+const WEST  = Vector3i(-1, 0, 0)
+
+const CELL_SIZE = Vector3(10.0, 4.0, 10.0)
 
 func _ready() -> void:
 	if get_parent() == get_tree().root:
@@ -49,7 +49,14 @@ func _ready() -> void:
 		if has_node("CanvasLayer"):
 			$CanvasLayer.queue_free()
 
-# --- DETECTARE DINAMICĂ MARKER3D (SOCKET-URI) ---
+func grid_to_world(grid_pos: Vector3i) -> Vector3:
+	return Vector3(
+		grid_pos.x * CELL_SIZE.x,
+		grid_pos.y * CELL_SIZE.y,
+		grid_pos.z * CELL_SIZE.z
+	)
+
+# Inspection dinamică a Marker3D (Exits) din scenele instanțiate
 func get_piece_exit_markers(piece_instance: Node3D) -> Array[Marker3D]:
 	var markers: Array[Marker3D] = []
 	var exits_container = piece_instance.get_node_or_null("Exits")
@@ -63,226 +70,166 @@ func get_piece_exit_markers(piece_instance: Node3D) -> Array[Marker3D]:
 				markers.append(child as Marker3D)
 	return markers
 
-# Verificare suprapunere fizică (Overlap Check pe distanță 3D)
-func check_piece_overlap(new_pos: Vector3) -> bool:
-	for existing in spawned_pieces:
-		# Verificăm dacă suntem pe același etaj Y (diferență Y < 4.0m) și la distanță 2D < 7.0m
-		var y_diff = abs(new_pos.y - existing.global_position.y)
-		if y_diff < 4.0:
-			var pos_2d_new = Vector2(new_pos.x, new_pos.z)
-			var pos_2d_existing = Vector2(existing.global_position.x, existing.global_position.z)
-			if pos_2d_new.distance_to(pos_2d_existing) < 7.0:
-				return true
-	return false
+# Rotire vector direcție 2D/3D în jurul Y cu un număr de rotații de 90 grade
+func rotate_dir(dir: Vector3i, rot_count: int) -> Vector3i:
+	var res = dir
+	for i in range(rot_count % 4):
+		res = Vector3i(-res.z, res.y, res.x)
+	return res
 
-# Selecție ponderată
-func select_weighted_horizontal_scene(candidates: Array, depth_ratio: float) -> PackedScene:
-	if candidates.is_empty():
-		return null
-	var total_w = 0.0
-	var weights = []
-	for sc in candidates:
-		var w = 10.0
-		if sc == HALLWAY_SCENE: w = lerp(hallway_weight * 1.5, hallway_weight * 0.5, depth_ratio)
-		elif sc == CORNER_SCENE: w = corner_weight
-		elif sc == T_JUNCTION_SCENE: w = lerp(t_junction_weight * 0.5, t_junction_weight * 1.5, depth_ratio)
-		elif sc == FOUR_WAY_SCENE: w = lerp(four_way_weight * 0.3, four_way_weight * 1.8, depth_ratio)
-		elif sc == ROOM_SCENE: w = lerp(room_weight * 0.2, room_weight * 2.5, depth_ratio)
-		weights.append(w)
-		total_w += w
+# Returnează lista direcțiilor socket-urilor citind direct din nodurile Marker3D ale scenei
+func get_socket_directions_from_scene(piece_scene: PackedScene) -> Array[Vector3i]:
+	var dummy = piece_scene.instantiate()
+	var markers = get_piece_exit_markers(dummy)
+	var dirs: Array[Vector3i] = []
+	for m in markers:
+		var local_pos = m.position
+		var dir_x = round(local_pos.x / 5.0)
+		var dir_z = round(local_pos.z / 5.0)
+		dirs.append(Vector3i(dir_x, 0, dir_z))
+	dummy.queue_free()
+	return dirs
 
-	var roll = randf() * total_w
-	var accum = 0.0
-	for i in range(candidates.size()):
-		accum += weights[i]
-		if roll <= accum:
-			return candidates[i]
-	return candidates[0]
+# Determină rotațiile valide pentru a conecta o intrare din `incoming_dir`
+func get_socket_rotations_for_entrance(piece_scene: PackedScene, incoming_dir: Vector3i) -> Array[int]:
+	var required_socket_dir = -incoming_dir
+	var base_exits = get_socket_directions_from_scene(piece_scene)
 
-# --- ALGORITMUL DE GENERARE STRUCTURATĂ PE ETAJE (DESCENDENT) ---
+	var valid_rots: Array[int] = []
+	for rot in range(4):
+		for b_exit in base_exits:
+			if rotate_dir(b_exit, rot) == required_socket_dir:
+				if not valid_rots.has(rot):
+					valid_rots.append(rot)
+	return valid_rots
+
+# Returnează lista ieșirilor unei piese la o rotație dată
+func get_exits_for_piece(piece_scene: PackedScene, rot_count: int) -> Array[Vector3i]:
+	var base_exits = get_socket_directions_from_scene(piece_scene)
+	var rotated_exits: Array[Vector3i] = []
+	for b_exit in base_exits:
+		rotated_exits.append(rotate_dir(b_exit, rot_count))
+	return rotated_exits
+
+# --- GENERARE PROCEDURALĂ BAZATĂ PE GRID 3D RIGID ---
 func generate_dungeon() -> void:
-	print("Începe generarea procedurală pe etaje (%d etaje, %d piese/etaj)..." % [max_floors, pieces_per_floor])
-
+	print("Începe generarea procedurală pe 3D Grid (10x10x4m)...")
+	grid_occupied.clear()
 	spawned_pieces.clear()
 
 	for child in pieces_node.get_children():
 		child.queue_free()
 
-	# Piesa de Intrare (Entrance) rămâne FIXĂ sus la (0, 0, 0)
-	var entrance_instance: Node3D = ENTRANCE_SCENE.instantiate()
-	entrance_instance.name = "Piece_Entrance"
-	entrance_instance.position = Vector3.ZERO
-	entrance_instance.rotation_degrees = Vector3.ZERO
-	pieces_node.add_child(entrance_instance, true)
-	spawned_pieces.append(entrance_instance)
+	# 1. Plasare ENTRANCE la celula (0,0,0)
+	var entrance_grid_pos = Vector3i(0, 0, 0)
+	var entrance_inst = ENTRANCE_SCENE.instantiate()
+	entrance_inst.name = "Piece_Entrance"
+	entrance_inst.position = grid_to_world(entrance_grid_pos)
+	entrance_inst.rotation_degrees = Vector3.ZERO
+	pieces_node.add_child(entrance_inst, true)
+	spawned_pieces.append(entrance_inst)
 
-	var current_open_exit: Dictionary = {}
-	var entrance_markers = get_piece_exit_markers(entrance_instance)
-	if not entrance_markers.is_empty():
-		current_open_exit = {
-			"global_transform": entrance_instance.global_transform * entrance_markers[0].transform
-		}
+	grid_occupied[entrance_grid_pos] = entrance_inst
 
-	var horizontal_scenes = [HALLWAY_SCENE, CORNER_SCENE, T_JUNCTION_SCENE, FOUR_WAY_SCENE, ROOM_SCENE]
+	# Stivă de conectat (Frontier/Queue de ieșiri deschise)
+	var open_frontiers: Array[Dictionary] = [
+		{ "grid_pos": entrance_grid_pos, "dir": NORTH }
+	]
+
+	var available_flat_scenes = [HALLWAY_SCENE, CORNER_SCENE, T_JUNCTION_SCENE, FOUR_WAY_SCENE, ROOM_SCENE]
 	var stair_scenes = [STAIRS_STRAIGHT_SCENE, STAIRS_ZIGZAG_SCENE]
 
-	# Generăm fiecare etaj în parte
-	for floor_idx in range(max_floors):
-		print("--- Generare Etaj %d ---" % (floor_idx + 1))
-		var floor_exits_queue: Array[Dictionary] = []
-		if not current_open_exit.is_empty():
-			floor_exits_queue.append(current_open_exit)
+	var pieces_placed_count = 1
 
-		var floor_piece_count = 0
+	while not open_frontiers.is_empty() and pieces_placed_count < num_pieces:
+		var frontier = open_frontiers.pop_front()
+		var source_cell: Vector3i = frontier["grid_pos"]
+		var step_dir: Vector3i = frontier["dir"]
 
-		# 1. Generăm piesele orizontale ale etajului curent
-		while not floor_exits_queue.is_empty() and floor_piece_count < pieces_per_floor:
-			var exit_info = floor_exits_queue.pop_front()
-			var exit_trans: Transform3D = exit_info["global_transform"]
-			var exit_pos: Vector3 = exit_trans.origin
-			var exit_dir: Vector3 = -exit_trans.basis.z.normalized()
+		var target_cell: Vector3i = source_cell + step_dir
 
-			var depth_ratio = float(floor_piece_count) / float(pieces_per_floor)
-			var candidates = horizontal_scenes.duplicate()
-			var piece_placed = false
+		if grid_occupied.has(target_cell):
+			continue
 
-			while not candidates.is_empty() and not piece_placed:
-				var scene = select_weighted_horizontal_scene(candidates, depth_ratio)
-				candidates.erase(scene)
+		var use_stairs = (randf() < 0.20) and abs(target_cell.y) <= 2
+		var chosen_scene: PackedScene = null
 
-				var cand_inst = scene.instantiate()
-				var sockets = get_piece_exit_markers(cand_inst)
+		if use_stairs:
+			chosen_scene = stair_scenes.pick_random()
+		else:
+			chosen_scene = available_flat_scenes.pick_random()
 
-				if sockets.is_empty():
-					cand_inst.queue_free()
-					continue
+		var valid_rots = get_socket_rotations_for_entrance(chosen_scene, step_dir)
+		if valid_rots.is_empty():
+			chosen_scene = HALLWAY_SCENE
+			valid_rots = get_socket_rotations_for_entrance(chosen_scene, step_dir)
 
-				sockets.shuffle()
+		if valid_rots.is_empty():
+			continue
 
-				for s_in in sockets:
-					var target_dir = -exit_dir
-					var local_dir = -s_in.transform.basis.z.normalized()
+		var chosen_rot = valid_rots.pick_random()
 
-					var angle = Vector2(local_dir.x, local_dir.z).angle_to(Vector2(target_dir.x, target_dir.z))
-					var child_basis = Basis(Vector3.UP, angle)
-					var child_pos = exit_pos - child_basis * s_in.position
+		var piece_inst = chosen_scene.instantiate()
+		piece_inst.name = "Piece_%d" % pieces_placed_count
 
-					if check_piece_overlap(child_pos):
-						continue
+		var actual_target_cell = target_cell
 
-					# Plasare reușită pe etaj!
-					cand_inst.name = "Piece_Floor%d_%d" % [floor_idx, spawned_pieces.size()]
-					cand_inst.position = child_pos
-					cand_inst.basis = child_basis
+		piece_inst.position = grid_to_world(actual_target_cell)
+		piece_inst.rotation_degrees.y = chosen_rot * -90.0
 
-					pieces_node.add_child(cand_inst, true)
-					spawned_pieces.append(cand_inst)
-					piece_placed = true
-					floor_piece_count += 1
+		pieces_node.add_child(piece_inst, true)
+		spawned_pieces.append(piece_inst)
+		grid_occupied[actual_target_cell] = piece_inst
+		pieces_placed_count += 1
 
-					for s_out in sockets:
-						if s_out == s_in:
-							continue
-						var out_basis = child_basis * s_out.transform.basis
-						var out_pos = child_pos + child_basis * s_out.position
-						floor_exits_queue.append({
-							"global_transform": Transform3D(out_basis, out_pos)
-						})
-					break
+		var current_exits = get_exits_for_piece(chosen_scene, chosen_rot)
+		var entry_dir_used = -step_dir
 
-				if piece_placed:
-					break
-				else:
-					cand_inst.queue_free()
+		for ex_dir in current_exits:
+			if ex_dir == entry_dir_used:
+				continue
 
-			if not piece_placed and not floor_exits_queue.is_empty():
-				_seal_exit_with_dead_end(exit_trans)
+			# Dacă piesa este o scară, ieșirea opusă (Exit_North) duce la nivelul inferior Y - 1!
+			var next_grid_cell = actual_target_cell
+			if chosen_scene in stair_scenes:
+				next_grid_cell.y -= 1
 
-		# 2. Dacă nu este ultimul etaj, adăugăm OBLIGATORIU o scară care coboară (-6m Y mai jos) spre etajul următor
-		if floor_idx < max_floors - 1 and not floor_exits_queue.is_empty():
-			var stair_exit_info = floor_exits_queue.pop_front()
-			var exit_trans: Transform3D = stair_exit_info["global_transform"]
+			open_frontiers.append({
+				"grid_pos": next_grid_cell,
+				"dir": ex_dir
+			})
 
-			stair_scenes.shuffle()
-			var stair_placed = false
+	# 2. Sigilăm TOATE ieșirile libere rămase pe grid cu DEAD END (Pereți de capăt)
+	_seal_all_open_exits(open_frontiers)
 
-			for stair_scene in stair_scenes:
-				var stair_inst = stair_scene.instantiate()
-				var sockets = get_piece_exit_markers(stair_inst)
-
-				# Socket-ul de sus/intrare al scării este Exit_South la Y=0.0m (sockets[1])
-				var s_in = sockets[1] if sockets.size() > 1 else sockets[0]
-				var target_dir = -(-exit_trans.basis.z.normalized())
-				var local_dir = -s_in.transform.basis.z.normalized()
-
-				var angle = Vector2(local_dir.x, local_dir.z).angle_to(Vector2(target_dir.x, target_dir.z))
-				var child_basis = Basis(Vector3.UP, angle)
-				var child_pos = exit_trans.origin - child_basis * s_in.position
-
-				if check_piece_overlap(child_pos):
-					stair_inst.queue_free()
-					continue
-
-				stair_inst.name = "Piece_Stair_Floor%d" % floor_idx
-				stair_inst.position = child_pos
-				stair_inst.basis = child_basis
-
-				pieces_node.add_child(stair_inst, true)
-				spawned_pieces.append(stair_inst)
-				stair_placed = true
-
-				# Ieșirea de jos a scării (Exit_North la Y=-6.0m) devine punctul de pornire pentru etajul următor!
-				var s_out = sockets[0]
-				var out_basis = child_basis * s_out.transform.basis
-				var out_pos = child_pos + child_basis * s_out.position
-
-				current_open_exit = {
-					"global_transform": Transform3D(out_basis, out_pos)
-				}
-				break
-
-			if not stair_placed and not floor_exits_queue.is_empty():
-				current_open_exit = floor_exits_queue.pop_front()
-
-		# Sigilăm restul de ieșiri nefolosite de pe acest etaj cu Dead End-uri
-		for remaining in floor_exits_queue:
-			_seal_exit_with_dead_end(remaining["global_transform"])
-
-	print("Dungeon generat cu succes descendent pe %d etaje! Total piese: %d" % [max_floors, spawned_pieces.size()])
+	print("Dungeon generat pe grid 3D cu succes! Total piese: %d" % spawned_pieces.size())
 
 	if multiplayer.is_server():
 		spawn_dungeon_loot()
 
-# Sigilare fizică pe nodul Marker3D
-func _seal_exit_with_dead_end(parent_exit_transform: Transform3D) -> void:
-	var dead_end_instance: Node3D = DEAD_END_SCENE.instantiate()
-	var sockets = get_piece_exit_markers(dead_end_instance)
+# Sigilare finală a oricărei ieșiri neconectate cu o piesă de capăt
+func _seal_all_open_exits(frontiers: Array[Dictionary]) -> void:
+	for frontier in frontiers:
+		var source_cell: Vector3i = frontier["grid_pos"]
+		var step_dir: Vector3i = frontier["dir"]
+		var target_cell: Vector3i = source_cell + step_dir
 
-	if sockets.is_empty():
-		dead_end_instance.queue_free()
-		return
+		if grid_occupied.has(target_cell):
+			continue
 
-	var s_in = sockets[0]
-	var parent_exit_pos: Vector3 = parent_exit_transform.origin
-	var parent_exit_dir: Vector3 = -parent_exit_transform.basis.z.normalized()
+		var valid_rots = get_socket_rotations_for_entrance(DEAD_END_SCENE, step_dir)
+		if valid_rots.is_empty():
+			continue
 
-	var target_dir = -parent_exit_dir
-	var local_dir = -s_in.transform.basis.z.normalized()
+		var chosen_rot = valid_rots[0]
+		var dead_end_inst = DEAD_END_SCENE.instantiate()
+		dead_end_inst.name = "Piece_DeadEnd_%d" % spawned_pieces.size()
+		dead_end_inst.position = grid_to_world(target_cell)
+		dead_end_inst.rotation_degrees.y = chosen_rot * -90.0
 
-	var angle = Vector2(local_dir.x, local_dir.z).angle_to(Vector2(target_dir.x, target_dir.z))
-	var child_basis = Basis(Vector3.UP, angle)
-	var child_pos = parent_exit_pos - child_basis * s_in.position
-
-	if check_piece_overlap(child_pos):
-		dead_end_instance.queue_free()
-		return
-
-	dead_end_instance.name = "Piece_DeadEnd_%d" % spawned_pieces.size()
-	dead_end_instance.position = child_pos
-	dead_end_instance.basis = child_basis
-
-	pieces_node.add_child(dead_end_instance, true)
-	spawned_pieces.append(dead_end_instance)
+		pieces_node.add_child(dead_end_inst, true)
+		spawned_pieces.append(dead_end_inst)
+		grid_occupied[target_cell] = dead_end_inst
 
 # --- SPAWNING LOOT PROCEDURAL AȘEZAT PE PODEA ---
 func spawn_dungeon_loot() -> void:
@@ -291,7 +238,6 @@ func spawn_dungeon_loot() -> void:
 		if piece.name.contains("Entrance") or piece.name.contains("DeadEnd") or piece.name.contains("Stair"):
 			continue
 
-		# Poziționăm loot-ul raportat la înălțimea Y a podelei piesei curente!
 		var floor_y = piece.global_position.y
 		var center_pos = Vector3(piece.global_position.x, floor_y + 0.3, piece.global_position.z)
 
@@ -300,7 +246,7 @@ func spawn_dungeon_loot() -> void:
 			for j in range(count):
 				spawn_loot_at(center_pos)
 		else:
-			if randf() < 0.25:
+			if randf() < 0.30:
 				spawn_loot_at(center_pos)
 
 func spawn_loot_at(pos: Vector3) -> void:
@@ -333,8 +279,7 @@ func spawn_loot_at(pos: Vector3) -> void:
 
 	var unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
 
-	# Offset fin pe XZ pe podea
-	var spawn_p = pos + Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0))
+	var spawn_p = pos + Vector3(randf_range(-1.5, 1.5), 0.0, randf_range(-1.5, 1.5))
 	loot_node.add_child(loot_instance, true)
 	loot_instance.global_position = spawn_p
 	loot_instance.init_loot(unique_id, rarity, price, color)
