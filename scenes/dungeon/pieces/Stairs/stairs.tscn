@@ -2,22 +2,25 @@
 
 [ext_resource type="PackedScene" uid="uid://4vydmjcxov26" path="res://assets/FBX format/stairs.fbx" id="1_3i61q"]
 [ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_gqgeb"]
+[ext_resource type="Script" path="res://addons/SimpleDungeons/DungeonRoom3D.gd" id="3_dungeon_room"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gjfwl"]
 albedo_texture = ExtResource("2_gqgeb")
 
 [node name="stairs" unique_id=1112768929 instance=ExtResource("1_3i61q")]
+script = ExtResource("3_dungeon_room")
+size_in_voxels = Vector3i(1, 2, 1)
+voxel_scale = Vector3(10, 4, 10)
+is_stair_room = true
+min_count = 2
+max_count = 5
 
 [node name="stairs" parent="." index="0" unique_id=2066541334]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4.057828, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_gjfwl")
 
-[node name="Exits" type="Node3D" parent="." index="1" unique_id=68349823]
+[node name="DOOR_Bottom" type="Node3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, -5)
 
-[node name="Exit_Narrow_Top" type="Marker3D" parent="Exits" index="0" unique_id=1623428070]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 2)
-metadata/socket_type = "NARROW"
-
-[node name="Exit_Narrow_Bottom" type="Marker3D" parent="Exits" index="1" unique_id=1999054136]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, -6)
-metadata/socket_type = "NARROW"
+[node name="DOOR_Top" type="Node3D" parent="." index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 5)

@@ -2,18 +2,19 @@
 
 [ext_resource type="PackedScene" uid="uid://586dg4a8wjg6" path="res://assets/FBX format/corridor-wide-end.fbx" id="1_lrmiu"]
 [ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_okqi4"]
+[ext_resource type="Script" path="res://addons/SimpleDungeons/DungeonRoom3D.gd" id="3_dungeon_room"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sarjx"]
 albedo_texture = ExtResource("2_okqi4")
 
 [node name="corridor-wide-end" unique_id=1285534827 instance=ExtResource("1_lrmiu")]
+script = ExtResource("3_dungeon_room")
+size_in_voxels = Vector3i(1, 1, 1)
+voxel_scale = Vector3(10, 4, 10)
 
 [node name="corridor-wide-end" parent="." index="0" unique_id=1831817135]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_sarjx")
 
-[node name="Exits" type="Node3D" parent="." index="1" unique_id=1620663273]
-
-[node name="Exit_Wide_South" type="Marker3D" parent="Exits" index="0" unique_id=390041293]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 4)
-metadata/socket_type = "WIDE"
+[node name="DOOR_South" type="Node3D" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)

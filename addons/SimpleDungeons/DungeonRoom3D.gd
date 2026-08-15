@@ -156,7 +156,7 @@ func unvirtualize_and_free_clone_if_needed(into_parent : Node3D) -> DungeonRoom3
 	var inst : DungeonRoom3D = get_original_packed_scene().instantiate()
 	copy_all_props(self, inst)
 	inst.transform = self.virtual_transform
-	into_parent.add_child(inst)
+	into_parent.add_child(inst, true)
 	inst.owner = into_parent.owner
 	return inst
 
