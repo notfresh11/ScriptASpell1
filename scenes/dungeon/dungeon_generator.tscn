@@ -1,6 +1,6 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://bk6olln0mfjx1"]
 
-[ext_resource type="Script" path="res://scripts/dungeon/dungeon_generator.gd" id="1_dungeon_generator"]
+[ext_resource type="Script" uid="uid://drog2uihaksi5" path="res://scripts/dungeon/dungeon_generator.gd" id="1_dungeon_generator"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.02, 0.02, 0.04, 1)
@@ -17,39 +17,38 @@ ambient_light_source = 3
 reflected_light_source = 2
 tonemap_mode = 2
 
-[node name="DungeonGenerator" type="Node3D"]
+[node name="DungeonGenerator" type="Node3D" unique_id=841761090]
 script = ExtResource("1_dungeon_generator")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1834699712]
 environment = SubResource("Environment_dungeon")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1772083911]
 transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
 light_color = Color(0.6, 0.7, 0.8, 1)
 light_energy = 0.3
 shadow_enabled = true
 
-[node name="Pieces" type="Node3D" parent="."]
+[node name="Pieces" type="Node3D" parent="." unique_id=1108301259]
 
-[node name="Players" type="Node3D" parent="."]
+[node name="Players" type="Node3D" parent="." unique_id=1367710700]
 
-[node name="Loot" type="Node3D" parent="."]
+[node name="Loot" type="Node3D" parent="." unique_id=118533424]
 
-[node name="PieceSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/dungeon/pieces/entrance_piece.tscn", "res://scenes/dungeon/pieces/hallway_piece.tscn", "res://scenes/dungeon/pieces/corner_piece.tscn", "res://scenes/dungeon/pieces/t_junction_piece.tscn", "res://scenes/dungeon/pieces/four_way_piece.tscn", "res://scenes/dungeon/pieces/room_piece.tscn", "res://scenes/dungeon/pieces/dead_end_piece.tscn")
+[node name="PieceSpawner" type="MultiplayerSpawner" parent="." unique_id=208997772]
 spawn_path = NodePath("../Pieces")
 
-[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/player/explorer_player.tscn")
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1657352893]
+_spawnable_scenes = PackedStringArray("uid://cloypl2l7177q")
 spawn_path = NodePath("../Players")
 
-[node name="LootSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/interactables/loot_item.tscn")
+[node name="LootSpawner" type="MultiplayerSpawner" parent="." unique_id=221852558]
+_spawnable_scenes = PackedStringArray("uid://dp1y5s2r36k2x")
 spawn_path = NodePath("../Loot")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1507849833]
 
-[node name="Control" type="Control" parent="CanvasLayer"]
+[node name="Control" type="Control" parent="CanvasLayer" unique_id=516034299]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -58,7 +57,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="CanvasLayer/Control"]
+[node name="Panel" type="Panel" parent="CanvasLayer/Control" unique_id=1631827553]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -66,7 +65,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control"]
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/Control" unique_id=490223557]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -74,17 +73,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer"]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/CenterContainer" unique_id=747281436]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox"]
+[node name="Label" type="Label" parent="CanvasLayer/Control/CenterContainer/VBox" unique_id=734587509]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Expedition Menu"
 horizontal_alignment = 1
 
-[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox"]
+[node name="BackButton" type="Button" parent="CanvasLayer/Control/CenterContainer/VBox" unique_id=526748910]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18

@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://cuhjtmofia3p8"]
+
+[ext_resource type="PackedScene" uid="uid://8f7al25n3qqr" path="res://assets/FBX format/corridor-transition.fbx" id="1_24g7x"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_bakob"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2tyrq"]
+albedo_texture = ExtResource("2_bakob")
+
+[node name="corridor-transition" unique_id=1876441391 instance=ExtResource("1_24g7x")]
+
+[node name="corridor-transition" parent="." index="0" unique_id=895757348]
+surface_material_override/0 = SubResource("StandardMaterial3D_2tyrq")

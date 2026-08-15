@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://dmfgljf1fyo1g"]
+
+[ext_resource type="PackedScene" uid="uid://586dg4a8wjg6" path="res://assets/FBX format/corridor-wide-end.fbx" id="1_lrmiu"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_okqi4"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sarjx"]
+albedo_texture = ExtResource("2_okqi4")
+
+[node name="corridor-wide-end" unique_id=1285534827 instance=ExtResource("1_lrmiu")]
+
+[node name="corridor-wide-end" parent="." index="0" unique_id=1831817135]
+surface_material_override/0 = SubResource("StandardMaterial3D_sarjx")

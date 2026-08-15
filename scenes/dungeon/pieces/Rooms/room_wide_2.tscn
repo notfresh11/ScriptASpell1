@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://0rqm5suwn8xx"]
+
+[ext_resource type="PackedScene" uid="uid://dqmxa7m7445tj" path="res://assets/FBX format/room-wide-variation.fbx" id="1_bylab"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_8fmqd"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8wgsw"]
+albedo_texture = ExtResource("2_8fmqd")
+
+[node name="room-wide-variation" unique_id=184768353 instance=ExtResource("1_bylab")]
+
+[node name="room-wide-variation" parent="." index="0" unique_id=1896480485]
+surface_material_override/0 = SubResource("StandardMaterial3D_8wgsw")

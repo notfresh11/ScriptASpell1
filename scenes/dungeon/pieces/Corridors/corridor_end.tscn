@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://cp3m336wip6pp"]
+
+[ext_resource type="PackedScene" uid="uid://dgak4otu2whjy" path="res://assets/FBX format/corridor-end.fbx" id="1_ngqxt"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_r5hna"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6wdk3"]
+albedo_texture = ExtResource("2_r5hna")
+
+[node name="corridor-end" unique_id=1370182493 instance=ExtResource("1_ngqxt")]
+
+[node name="corridor-end" parent="." index="0" unique_id=975865030]
+surface_material_override/0 = SubResource("StandardMaterial3D_6wdk3")

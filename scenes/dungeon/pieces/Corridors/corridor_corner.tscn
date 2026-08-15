@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://cvioyogqajmac"]
+
+[ext_resource type="PackedScene" uid="uid://dstg3t2owu653" path="res://assets/FBX format/corridor-corner.fbx" id="1_w2h1n"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_qj0q7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rsx1s"]
+albedo_texture = ExtResource("2_qj0q7")
+
+[node name="corridor-corner" unique_id=1709434757 instance=ExtResource("1_w2h1n")]
+
+[node name="corridor-corner" parent="." index="0" unique_id=734339516]
+surface_material_override/0 = SubResource("StandardMaterial3D_rsx1s")

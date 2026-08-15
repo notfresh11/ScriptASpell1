@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bpg1i80m62vqa"]
+
+[ext_resource type="PackedScene" uid="uid://4ewkjpxayy1g" path="res://assets/FBX format/corridor-junction.fbx" id="1_ghcmx"]
+[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_8tlt4"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xsmki"]
+albedo_texture = ExtResource("2_8tlt4")
+
+[node name="corridor-junction" unique_id=559933749 instance=ExtResource("1_ghcmx")]
+
+[node name="corridor-junction" parent="." index="0" unique_id=1373983465]
+surface_material_override/0 = SubResource("StandardMaterial3D_xsmki")
