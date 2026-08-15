@@ -5,13 +5,10 @@ extends Node3D
 @export var max_floors: int = 3 # Numărul maxim de etaje ale dungeon-ului
 @export var player_scene: PackedScene = preload("res://scenes/player/explorer_player.tscn")
 
-# Preîncărcăm piesele modulare + Loot
+# Preîncărcăm piesele modulare noi (Kenney) + Entrance/DeadEnd + Loot
 const ENTRANCE_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/entrance_piece.tscn")
-const HALLWAY_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/hallway_piece.tscn")
-const CORNER_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/corner_piece.tscn")
-const T_JUNCTION_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/t_junction_piece.tscn")
-const FOUR_WAY_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/four_way_piece.tscn")
-const ROOM_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/room_piece.tscn")
+const CORRIDOR_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/corridor_piece.tscn")
+const ROOM_LARGE_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/room_large_piece.tscn")
 const STAIRS_STRAIGHT_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/stairs_straight_piece.tscn")
 const STAIRS_ZIGZAG_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/stairs_zigzag_piece.tscn")
 const DEAD_END_SCENE: PackedScene = preload("res://scenes/dungeon/pieces/dead_end_piece.tscn")
@@ -20,7 +17,6 @@ const LOOT_SCENE: PackedScene = preload("res://scenes/interactables/loot_item.ts
 @onready var pieces_node: Node3D = $Pieces
 @onready var players_node: Node3D = $Players
 @onready var loot_node: Node3D = $Loot
-@onready var back_button: Button = $CanvasLayer/Control/CenterContainer/VBox/BackButton
 
 # Piese instanțiate
 var spawned_pieces: Array[Node3D] = []
@@ -36,7 +32,8 @@ const FLIP_180_Y: Transform3D = Transform3D(Basis(Vector3.UP, PI), Vector3.ZERO)
 func _ready() -> void:
 	if get_parent() == get_tree().root:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		back_button.pressed.connect(_on_back_pressed)
+		if has_node("CanvasLayer/Control/CenterContainer/VBox/BackButton"):
+			$CanvasLayer/Control/CenterContainer/VBox/BackButton.pressed.connect(_on_back_pressed)
 
 		if multiplayer.is_server():
 			generate_dungeon()
@@ -59,6 +56,16 @@ func get_piece_exit_markers(piece_instance: Node3D) -> Array[Marker3D]:
 			if child is Marker3D:
 				markers.append(child as Marker3D)
 	return markers
+
+# Calculează transformarea relativă a unui nod față de nodul rădăcină (fără a necesita SceneTree / global_transform)
+func get_relative_transform(node: Node3D, root_node: Node3D) -> Transform3D:
+	var xform = Transform3D.IDENTITY
+	var curr: Node = node
+	while curr != null and curr != root_node:
+		if curr is Node3D:
+			xform = (curr as Node3D).transform * xform
+		curr = curr.get_parent()
+	return xform
 
 # Calculează AABB-ul local al unei piese combinând formele sale de coliziune, CSG-uri și Mesh-uri
 func get_piece_local_aabb(piece_instance: Node3D) -> AABB:
@@ -90,8 +97,8 @@ func get_piece_local_aabb(piece_instance: Node3D) -> AABB:
 				node_aabb = AABB(-size / 2.0, size)
 				found_node_aabb = true
 
-		if found_node_aabb:
-			var local_xform: Transform3D = piece_instance.global_transform.affine_inverse() * node.global_transform
+		if found_node_aabb and node is Node3D:
+			var local_xform: Transform3D = get_relative_transform(node as Node3D, piece_instance)
 			var transformed_aabb = transform_aabb(node_aabb, local_xform)
 			if not has_aabb:
 				combined_aabb = transformed_aabb
@@ -162,7 +169,7 @@ func generate_dungeon() -> void:
 			"floor": 0
 		})
 
-	var available_flat_scenes = [HALLWAY_SCENE, CORNER_SCENE, T_JUNCTION_SCENE, FOUR_WAY_SCENE, ROOM_SCENE]
+	var available_flat_scenes = [CORRIDOR_SCENE, ROOM_LARGE_SCENE]
 	var stair_scenes = [STAIRS_STRAIGHT_SCENE, STAIRS_ZIGZAG_SCENE]
 
 	for floor_index in range(max_floors):
@@ -388,10 +395,13 @@ func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 func _input(event: InputEvent) -> void:
+	if not has_node("CanvasLayer/Control"):
+		return
 	if event.is_action_pressed("ui_cancel"):
-		if $CanvasLayer/Control.visible:
-			$CanvasLayer/Control.hide()
+		var control = get_node("CanvasLayer/Control")
+		if control.visible:
+			control.hide()
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		else:
-			$CanvasLayer/Control.show()
+			control.show()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
