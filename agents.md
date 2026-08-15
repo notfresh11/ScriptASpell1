@@ -488,6 +488,21 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 
 ---
 
+### SESIUNEA 8: Trecerea la Alinierea Socket-to-Socket cu Detectare Suprapunere AABB (Toleranță Inset)
+
+#### A. Ce s-a realizat în această sesiune (Project State)
+1. **Eliminarea Limitei Rigide de Dimensiune de 10x10m:**
+   - Eliminat algoritmul dependent de celule fixe de 10x10m. Generatorul suportă acum piese de orice dimensiune (piese single-piece mari, coridoare lungi, încăperi asimetrice) prin ancorare dinamică pe nodurile `Marker3D`.
+2. **Aliniere Socket-to-Socket prin Transform Matching:**
+   - Fiecare piesă este plasată prin alinierea transform-ului global al socket-ului de ieșire (`Marker3D`) la socket-ul țintă cu rotație de 180° în jurul axei Y: `cand_global_xform = target_marker.global_transform * FLIP_180_Y * cand_marker.transform.inverse()`.
+3. **Prevenire Suprapuneri prin AABB Intersect Inset:**
+   - Calculat AABB-ul lumii pentru fiecare piesă nouă și verificat suprapunerea cu piesele deja plasate utilizând o toleranță de marjă interioară (`inset = 0.2m`) pentru ca suprafețele de contact ale ușilor să nu genereze coliziuni false.
+4. **Sigilarea Socket-urilor Deschise & Spawning Loot:**
+   - Toate socket-urile deschise rămase neconectate la finalul generării sunt sigilate automat cu piesa `dead_end_piece.tscn`.
+   - Spawning-ul de loot și playeri rămâne integrat direct pe podelele pieselor generate.
+
+---
+
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
 
 Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.
