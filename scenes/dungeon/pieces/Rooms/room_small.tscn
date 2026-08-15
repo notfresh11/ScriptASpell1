@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://p6cgf2gbnk4j"]
 
-[ext_resource type="PackedScene" uid="uid://b4xvfwudtcaot" path="res://assets/FBX format/room-small.fbx" id="1_dtl8x"]
-[ext_resource type="Texture2D" uid="uid://dssga6s7xhn0x" path="res://assets/FBX format/variation-a.png" id="2_mqv0m"]
+[ext_resource type="PackedScene" path="res://assets/FBX format/room-small.fbx" id="1_dtl8x"]
+[ext_resource type="Texture2D" path="res://assets/FBX format/variation-a.png" id="2_mqv0m"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_we4qb"]
 albedo_texture = ExtResource("2_mqv0m")
