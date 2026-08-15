@@ -169,7 +169,7 @@ func aabbs_intersect_inset(aabb1: AABB, aabb2: AABB, inset: float = 0.2) -> bool
 	return shrunk1.intersects(shrunk2)
 
 # Încearcă plasarea unei piese dintr-o listă de piese la un socket dat
-func try_place_piece_at_socket(target_idx: int, scene_pool: Array[PackedScene]) -> bool:
+func try_place_piece_at_socket(target_idx: int, scene_pool: Array) -> bool:
 	if target_idx < 0 or target_idx >= open_sockets.size():
 		return false
 
