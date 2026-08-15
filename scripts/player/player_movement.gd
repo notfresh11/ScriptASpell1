@@ -46,6 +46,7 @@ func _enter_tree() -> void:
 @export var torch_color: Color = Color(1, 0.65, 0.3, 1)
 
 var torch_time: float = 0.0
+var noclip_active: bool = false
 
 # UI References
 @onready var hud: CanvasLayer = $HUD
@@ -203,7 +204,8 @@ func _setup_input_actions() -> void:
 		"pickup": [KEY_E],
 		"drop": [KEY_Q],
 		"toggle_flashlight": [KEY_F],
-		"toggle_coding": [KEY_B]
+		"toggle_coding": [KEY_B],
+		"toggle_noclip": [KEY_QUOTELEFT, KEY_ASCIITILDE]
 	}
 
 	for action in actions:
@@ -249,6 +251,14 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
+
+	# Tasta ~ (Tilde) comută modul Debug Fly / Noclip
+	if event.is_action_pressed("toggle_noclip"):
+		noclip_active = not noclip_active
+		var col_shape = get_node_or_null("CollisionShape3D")
+		if col_shape:
+			col_shape.disabled = noclip_active
+		print("Debug Noclip mode: ", noclip_active)
 
 	# Tasta B deschide/închide editorul de coding sau închide shopul
 	if event.is_action_pressed("toggle_coding"):
@@ -308,6 +318,19 @@ func _physics_process(delta: float) -> void:
 		if not is_on_floor():
 			velocity.y -= (gravity * gravity_multiplier) * delta
 		move_and_slide()
+		return
+
+	# --- DEBUG NOCLIP / FLY MODE ---
+	if noclip_active:
+		var fly_vec = Vector3.ZERO
+		if Input.is_action_pressed("move_forward"): fly_vec -= camera.global_transform.basis.z
+		if Input.is_action_pressed("move_backward"): fly_vec += camera.global_transform.basis.z
+		if Input.is_action_pressed("move_left"): fly_vec -= camera.global_transform.basis.x
+		if Input.is_action_pressed("move_right"): fly_vec += camera.global_transform.basis.x
+		if Input.is_key_pressed(KEY_SPACE): fly_vec += Vector3.UP
+		if Input.is_key_pressed(KEY_SHIFT): fly_vec += Vector3.DOWN
+
+		global_position += fly_vec.normalized() * SPEED * 3.0 * delta
 		return
 
 	# --- INTERPRETER TICK ---
