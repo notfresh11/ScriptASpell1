@@ -517,6 +517,21 @@ S-a adăugat o structură completă și stabilă pentru magazia de programare ru
 
 ---
 
+### SESIUNEA 10: Implementare Algoritm de Backtracking pentru Generare Dungeon Procedural
+
+#### A. Ce s-a realizat în această sesiune (Project State)
+1. **Algoritm de Backtracking Secvențial per Etaj (`generate_floor_backtrack`):**
+   - Implementat un algoritm complet de căutare recursivă cu backtracking în `scripts/dungeon/dungeon_generator.gd`.
+   - Algoritmul garantează generarea a ~30 de piese per etaj pe 3 etaje (total ~90-100 piese) și minim 3-4 camere per etaj, retrăgând automat piesele invalide sau care conduc la blocaje.
+2. **Reguli de Layout & Conectivitate:**
+   - Păstrată regula de trunchi `WIDE` exclusiv pe Etajul 0, cu tranziții naturale `WIDE -> NARROW` și selecție aleatorie pe Etajele 1 și 2.
+   - Păstrat filtru strict împotriva alăturării directe a două camere (camerele nu se lipesc direct de alte camere).
+   - Tranzițiile între etaje folosesc scări conectate prin socket-ul superior (`Top`), cu undo/redo complet în caz de backtracking.
+3. **Sigilarea Socket-urilor (Dead-Ends):**
+   - Conform cerinței, capetele de coridor (dead-ends) sunt plasate exclusiv la finalul generării prin `_seal_all_open_sockets()`, sau atunci când o piesa întâlnește o coliziune forțată.
+
+---
+
 ## 12. SISTEMUL DE DATE & ECONOMIE: DIGITIZARE, GIT PULL ȘI HARD DISK DROP
 
 Această secțiune definește mecanica centrală și unică de transport și valorificare a resurselor (Loot-ului) din dungeon pentru atingerea cotei corporatiste (**Quota**). Sistemul elimină transportul fizic tradițional de cutii și îl înlocuiește cu un flux asimetric bazat pe **Digitizare, Transfer de Date (Git Pull), Hacking și Securitate Cibernetică**.
