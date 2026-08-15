@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://r0xip2ctdaq5" path="res://scripts/map1/map1.gd" id="1_map_script"]
 [ext_resource type="PackedScene" uid="uid://cx6y8u4s35m8j" path="res://scenes/interactables/dungeon_door.tscn" id="2_dungeon_door"]
-[ext_resource type="PackedScene" path="res://scenes/dungeon/dungeon_generator.tscn" id="3_dungeon_gen"]
+[ext_resource type="PackedScene" uid="uid://bk6olln0mfjx1" path="res://scenes/dungeon/dungeon_generator.tscn" id="3_dungeon_gen"]
 [ext_resource type="PackedScene" uid="uid://be8sc007v3m8j" path="res://scenes/interactables/green_platform.tscn" id="4_green_platform"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
@@ -14,6 +14,7 @@ ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
 sky_material = SubResource("ProceduralSkyMaterial_sky")
 
 [sub_resource type="Environment" id="Environment_world"]
+background_energy_multiplier = 3.0
 sky = SubResource("Sky_env")
 ambient_light_source = 3
 ambient_light_color = Color(0.14373028, 0.12544477, 0.48124737, 1)
