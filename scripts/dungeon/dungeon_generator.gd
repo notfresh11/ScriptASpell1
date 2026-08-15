@@ -399,12 +399,19 @@ func generate_floor_backtrack(current_floor: int, target_pieces: int, min_rooms:
 	if floor_socket_indices.is_empty():
 		return false # Dead end before reaching piece count target
 
-	floor_socket_indices.shuffle()
+	# MANDATORY PRIORITY: STAIR EXIT SOCKETS MUST BE EXPANDED FIRST!
+	# This ensures stair exits connect to active corridors and are NEVER left isolated or blocked!
+	var stair_sockets: Array[int] = []
+	var other_sockets: Array[int] = []
 
-	var wide_pool = [
-		CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_CORNER_SCENE,
-		CORRIDOR_WIDE_JUNCTION_SCENE, CORRIDOR_WIDE_INTERSECTION_SCENE
-	]
+	for idx in floor_socket_indices:
+		if cand_is_stair_piece(open_sockets[idx]["piece"]):
+			stair_sockets.append(idx)
+		else:
+			other_sockets.append(idx)
+
+	other_sockets.shuffle()
+	floor_socket_indices = stair_sockets + other_sockets
 
 	var room_pool = [
 		ROOM_SMALL_SCENE, ROOM_SMALL_2_SCENE, ROOM_CORNER_SCENE,
@@ -421,7 +428,7 @@ func generate_floor_backtrack(current_floor: int, target_pieces: int, min_rooms:
 		var parent_piece: Node3D = target_socket_data["piece"]
 		var parent_is_room: bool = is_room_piece(parent_piece)
 		var parent_is_corner: bool = is_corner_piece(parent_piece)
-		var parent_is_straight: bool = is_straight_corridor(parent_piece)
+		var parent_is_stair: bool = cand_is_stair_piece(parent_piece)
 
 		# CHECK SOCKET CLOSURE WITH FACING SOCKET
 		var other_socket_idx = find_overlapping_socket_idx(target_socket_idx)
@@ -447,27 +454,29 @@ func generate_floor_backtrack(current_floor: int, target_pieces: int, min_rooms:
 
 		if target_type == "WIDE":
 			if current_floor == 0:
-				candidate_scenes = [CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_JUNCTION_SCENE, CORRIDOR_WIDE_CORNER_SCENE, CORRIDOR_TRANSITION_SCENE]
+				candidate_scenes = [CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_JUNCTION_SCENE, CORRIDOR_WIDE_INTERSECTION_SCENE, CORRIDOR_WIDE_CORNER_SCENE, CORRIDOR_TRANSITION_SCENE]
 			else:
-				candidate_scenes = [CORRIDOR_TRANSITION_SCENE, CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_CORNER_SCENE]
+				candidate_scenes = [CORRIDOR_TRANSITION_SCENE, CORRIDOR_WIDE_SCENE, CORRIDOR_WIDE_JUNCTION_SCENE, CORRIDOR_WIDE_CORNER_SCENE]
 			candidate_scenes.shuffle()
 		else:
 			# NARROW socket
-			var straight_corridors = [CORRIDOR_SCENE, CORRIDOR_SCENE, CORRIDOR_SCENE]
+			var straight_corridors = [CORRIDOR_SCENE]
 			var junctions = [CORRIDOR_JUNCTION_SCENE, CORRIDOR_INTERSECTION_SCENE]
 			var corners = [CORRIDOR_CORNER_SCENE]
 			var rooms = room_pool.duplicate()
 
-			straight_corridors.shuffle()
 			junctions.shuffle()
+			corners.shuffle()
 			rooms.shuffle()
 
-			if current_floor_room_count < min_rooms:
-				candidate_scenes = rooms + straight_corridors + junctions + corners
-			elif parent_is_straight:
-				candidate_scenes = straight_corridors + junctions + rooms + corners
+			if parent_is_stair:
+				# Right off stairs, place a junction, straight corridor, or transition
+				candidate_scenes = junctions + straight_corridors + corners
+			elif current_floor_room_count < min_rooms:
+				candidate_scenes = rooms + junctions + corners + straight_corridors
 			else:
-				candidate_scenes = straight_corridors + junctions + corners + rooms
+				# Rich organic layout: mix junctions, corners, straight corridors, and side rooms
+				candidate_scenes = junctions + corners + straight_corridors + rooms
 
 		for scene in candidate_scenes:
 			var cand_inst = scene.instantiate()
@@ -565,6 +574,13 @@ func _seal_single_socket(socket_idx: int) -> void:
 		return
 
 	var socket_data = open_sockets[socket_idx]
+	var parent_piece: Node3D = socket_data["piece"]
+
+	# Stair exit sockets must NOT be sealed with a dead end wall!
+	if cand_is_stair_piece(parent_piece):
+		open_sockets.remove_at(socket_idx)
+		return
+
 	var target_xform = get_socket_global_transform(socket_data)
 	var target_type: String = socket_data["type"]
 
@@ -576,17 +592,29 @@ func _seal_single_socket(socket_idx: int) -> void:
 		var cand_marker = de_markers[0]
 		var cand_marker_local = get_relative_transform(cand_marker, dead_end_inst)
 		var cand_global_xform = target_xform * FLIP_180_Y * cand_marker_local.inverse()
-
-		dead_end_inst.name = "Piece_End_%d" % spawned_pieces.size()
-		pieces_node.add_child(dead_end_inst, true)
-		dead_end_inst.global_transform = cand_global_xform
-
-		_add_collisions_to_piece(dead_end_inst)
-
 		var de_local_aabb = get_piece_local_aabb(dead_end_inst)
 		var de_world_aabb = transform_aabb(de_local_aabb, cand_global_xform)
-		placed_aabbs.append(de_world_aabb)
-		spawned_pieces.append(dead_end_inst)
+
+		# Check if dead end piece overlaps any non-parent piece interior
+		var overlaps = false
+		for i in range(spawned_pieces.size()):
+			if spawned_pieces[i] == parent_piece:
+				continue
+			if aabbs_intersect_inset(de_world_aabb, placed_aabbs[i], 0.3):
+				overlaps = true
+				break
+
+		if not overlaps:
+			dead_end_inst.name = "Piece_End_%d" % spawned_pieces.size()
+			pieces_node.add_child(dead_end_inst, true)
+			dead_end_inst.global_transform = cand_global_xform
+
+			_add_collisions_to_piece(dead_end_inst)
+
+			placed_aabbs.append(de_world_aabb)
+			spawned_pieces.append(dead_end_inst)
+		else:
+			dead_end_inst.queue_free()
 	else:
 		dead_end_inst.queue_free()
 
